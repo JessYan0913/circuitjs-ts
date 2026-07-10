@@ -10,18 +10,18 @@
 
 | 元件 | dump type | Java type | 状态 | 说明 |
 |------|-----------|-----------|------|------|
-| `TransformerElm.java` | `tform` | 字符 `'T'` | ❌ | 变压器（互感耦合，4 post） |
-| `TappedTransformerElm.java` | `tform2` | 169 | ❌ | 中心抽头变压器（5 post） |
-| `CustomTransformerElm.java` | `ctrans` | 406 | ❌ | 自定义匝数比 |
-| `TransLineElm.java` | `tline` | 171 | ❌ | 传输线（延迟线模型） |
-| `CrystalElm.java` | `xtal` | 412 | ❌ | 晶振（RLC 串联谐振） |
-| `RelayElm.java` | `relay` | 178 | ❌ | 继电器（线圈控制触点） |
-| `TimeDelayRelayElm.java` | `tdrelay` | 414 | ❌ | 延时继电器 |
-| `DCMotorElm.java` | `dcm` | 415 | ❌ | 直流电机 |
-| `LampElm.java` | `lamp` | 181 | ❌ | 白炽灯（阻抗随温度/电流变化） |
-| `LEDElm.java` | `led` | 162 | ❌ | 发光二极管 |
-| `LEDArrayElm.java` | `ledarray` | 405 | ❌ | LED 阵列 |
-| `SparkGapElm.java` | `spark` | 187 | ❌ | 放电间隙（击穿导通） |
+| `TransformerElm.java` | `tform` | 字符 `'T'` | ✅ | 变压器（互感耦合，4 post） |
+| `TappedTransformerElm.java` | `tform2` | 169 | ✅ | 中心抽头变压器（5 post） |
+| `CustomTransformerElm.java` | `ctrans` | 406 | ✅ | 自定义匝数比 |
+| `TransLineElm.java` | `tline` | 171 | ✅ | 传输线（延迟线模型） |
+| `CrystalElm.java` | `xtal` | 412 | ✅ | 晶振（RLC 串联谐振） |
+| `RelayElm.java` | `relay` | 178 | ✅ | 继电器（线圈控制触点） |
+| `TimeDelayRelayElm.java` | `tdrelay` | 414 | ✅ | 延时继电器 |
+| `DCMotorElm.java` | `dcm` | 415 | ✅ | 直流电机 |
+| `LampElm.java` | `lamp` | 181 | ✅ | 白炽灯（阻抗随温度/电流变化） |
+| `LEDElm.java` | `led` | 162 | ✅ | 发光二极管 |
+| `LEDArrayElm.java` | `ledarray` | 405 | ✅ | LED 阵列 |
+| `SparkGapElm.java` | `spark` | 187 | ✅ | 放电间隙（击穿导通） |
 
 ---
 

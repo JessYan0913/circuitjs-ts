@@ -9,17 +9,17 @@
 ## 全局概览
 
 ```
-██ 完成 ████████████░░░░░░ 41% 核心元件  (79/96+ 元件)
+██ 完成 ████████████░░░░░░ 45% 核心元件  (91/96+ 元件)
 ```
 
 | 指标 | 数值 |
 |------|------|
 | 总模块数 | 19 (模块 0–18) |
-| 已完成模块 | 1 |
+| 已完成模块 | 2 |
 | 进行中模块 | 6 (00, 02, 03, 05, 10, 11) |
-| 未开始模块 | 13 |
-| 已实现元件 | 79 / 96+ |
-| 序列化支持 | 79 / 96+ |
+| 未开始模块 | 12 |
+| 已实现元件 | 91 / 96+ |
+| 序列化支持 | 91 / 96+ |
 
 ---
 
@@ -41,7 +41,7 @@
 |------|------|------|--------|------|
 | 模块 4 — 半导体 | `████████████░░░░ 50%` | 🔄 进行中 | 18 | 36 |
 | 模块 5 — 数字逻辑 | `████████████████░░░░ 76%` | 🔄 进行中 | 34 | 45 |
-| 模块 6 — 变压器/机电 | `░░░░░░░░░░░░░░ 0%` | ⏳ 待开始 | 0 | 12 |
+| 模块 6 — 变压器/机电 | `████████████████████ 100%` | ✅ 已完成 | 12 | 12 |
 | 模块 7 — 测量与显示 | `░░░░░░░░░░░░░░ 7%` | ⏳ 待开始 | 1 | 13 |
 
 ### 第三阶段：UI 和交互系统 (P2)
@@ -73,7 +73,7 @@
 
 ## 元件注册表进度
 
-当前注册 79 个元件，目标 90+。
+当前注册 91 个元件，目标 96+。
 
 | 元件 | dumpId | 文件 | 状态 |
 |------|--------|------|------|
@@ -150,6 +150,18 @@
 | Custom Logic | `208` | `CustomLogicComponent.ts` | ✅ |
 | Custom Composite | `410` | `CustomCompositeComponent.ts` | ✅ |
 | Custom Chip | `cchip` | `CustomCompositeChipComponent.ts` | ✅ |
+| LED | `162` | `LEDComponent.ts` | ✅ |
+| Lamp | `181` | `LampComponent.ts` | ✅ |
+| Transformer | `'T'` (84) | `TransformerComponent.ts` | ✅ |
+| Tapped Transformer | `169` | `TappedTransformerComponent.ts` | ✅ |
+| Custom Transformer | `406` | `CustomTransformerComponent.ts` | ✅ |
+| Transmission Line | `171` | `TransLineComponent.ts` | ✅ |
+| Relay | `178` | `RelayComponent.ts` | ✅ |
+| Time Delay Relay | `414` | `TimeDelayRelayComponent.ts` | ✅ |
+| DC Motor | `415` | `DCMotorComponent.ts` | ✅ |
+| Crystal | `412` | `CrystalComponent.ts` | ✅ |
+| Spark Gap | `187` | `SparkGapComponent.ts` | ✅ |
+| LED Array | `405` | `LEDArrayComponent.ts` | ✅ |
 
 ---
 

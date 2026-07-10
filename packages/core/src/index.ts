@@ -93,3 +93,17 @@ import './components/chips/TriStateComponent.js';
 import './components/composite/CustomLogicComponent.js';
 import './components/composite/CustomCompositeComponent.js';
 import './components/composite/CustomCompositeChipComponent.js';
+
+// Transformers, transmission lines, electromechanical (Module 6)
+import './components/electromechanical/LEDComponent.js';
+import './components/electromechanical/LampComponent.js';
+import './components/electromechanical/TransformerComponent.js';
+import './components/electromechanical/TappedTransformerComponent.js';
+import './components/electromechanical/CustomTransformerComponent.js';
+import './components/electromechanical/TransLineComponent.js';
+import './components/electromechanical/RelayComponent.js';
+import './components/electromechanical/TimeDelayRelayComponent.js';
+import './components/electromechanical/DCMotorComponent.js';
+import './components/electromechanical/CrystalComponent.js';
+import './components/electromechanical/LEDArrayComponent.js';
+import './components/electromechanical/SparkGapComponent.js';
