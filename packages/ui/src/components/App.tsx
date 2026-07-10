@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { CircuitCanvas } from './CircuitCanvas.js';
 import { useCircuitStore } from '../store/circuitStore.js';
 
@@ -17,6 +17,26 @@ export function App() {
     const showCurrent = useCircuitStore((s) => s.showCurrent);
     const storeSetTime = useCircuitStore((s) => s.setTime);
     const autoCenter = useCircuitStore((s) => s.autoCenter);
+
+    // Global keyboard shortcuts (Space for run/stop)
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                const store = useCircuitStore.getState();
+                if (store.running) {
+                    store.simManager?.stop();
+                    store.setRunning(false);
+                } else {
+                    store.simManager?.start();
+                    store.setRunning(true);
+                }
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
 
     const handleLoadCircuit = useCallback(async () => {
         const text = prompt('Paste circuit data text:');

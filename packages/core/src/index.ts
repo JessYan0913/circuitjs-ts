@@ -15,6 +15,8 @@ export * from './components/registry.js';
 
 export * from './demo.js';
 
+export { WireComponent } from './components/passive/WireComponent.js';
+
 // Import components to register them
 import './components/passive/ResistorComponent.js';
 import './components/passive/CapacitorComponent.js';
