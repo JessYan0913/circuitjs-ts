@@ -27,6 +27,7 @@ export function createScopePlot(
 
 /**
  * Create a new ScopeConfig with default values.
+ * 'speed' controls how many simulation maxTimeSteps per pixel column.
  */
 export function createScopeConfig(
     elmId: number,
@@ -52,10 +53,13 @@ export function createScopeConfig(
 
 /**
  * Capture a data point into a scope plot's circular buffer.
- * Called each simulation step.
+ *
+ * The simulation engine calls this once per animation frame (or could be
+ * called per simulation timestep with deeper integration). Each call writes
+ * into the current buffer slot (merging min/max) and advances the pointer.
  *
  * @param plot - The plot config whose buffers to update
- * @param value - The instantaneous value to record (both max and min)
+ * @param value - The instantaneous value to record
  * @param pointCount - Total number of scope points (power of 2)
  */
 export function captureScopePoint(
@@ -67,7 +71,6 @@ export function captureScopePoint(
     const mask = pointCount - 1;
 
     // Insert into min/max ring buffers
-    // If this is the same time index as the last write, merge; otherwise advance
     plot.maxValues[ptr] = Math.max(plot.maxValues[ptr], value);
     plot.minValues[ptr] = Math.min(plot.minValues[ptr], value);
 

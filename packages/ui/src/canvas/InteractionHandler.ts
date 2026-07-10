@@ -168,6 +168,7 @@ export interface InteractionCallbacks {
     onUndoSnapshot?: () => void;
     onContextMenu?: (menu: ContextMenuState | null) => void;
     setCursor?: (cursor: string) => void;
+    onEditComponent?: (component: CircuitComponent) => void;
 }
 
 export interface BoxSelectRect {
@@ -186,6 +187,9 @@ export class InteractionHandler {
     private pendingWire: CircuitComponent | null = null;
     /** Component being split (midpoint drag) */
     private splitWire: CircuitComponent | null = null;
+    /** Double-click tracking */
+    private lastClickTime = 0;
+    private lastClickComponent: CircuitComponent | null = null;
 
     constructor(
         private renderer: () => CircuitRenderer,
@@ -251,9 +255,15 @@ export class InteractionHandler {
             case 'flip_y':
                 this.flipSelected(false, true);
                 break;
-            case 'edit':
-                // Currently no property editor UI — this will be a placeholder
+            case 'edit': {
+                if (componentId !== null) {
+                    const comp = this.findComponentById(componentId);
+                    if (comp) {
+                        this.callbacks.onEditComponent?.(comp);
+                    }
+                }
                 break;
+            }
             case 'duplicate':
                 this.duplicateSelected();
                 break;
@@ -285,6 +295,18 @@ export class InteractionHandler {
             this.openContextMenu(sx, sy, elm);
             return;
         }
+
+        // Double-click detection on same component → open editor
+        const now = Date.now();
+        const clickElm = findClosestHandle(this.components(), gx, gy).elm ?? findComponentAt(this.components(), gx, gy);
+        if (clickElm && clickElm === this.lastClickComponent && now - this.lastClickTime < 300) {
+            this.lastClickTime = 0;
+            this.lastClickComponent = null;
+            this.callbacks.onEditComponent?.(clickElm);
+            return;
+        }
+        this.lastClickTime = now;
+        this.lastClickComponent = clickElm;
 
         let mode = this.state.mode;
         if (button === 1 || alt) {

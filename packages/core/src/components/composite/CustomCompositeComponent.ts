@@ -1,21 +1,39 @@
-import { ChipComponent, createPin, SIDE_W, SIDE_E } from '../base/ChipComponent.js';
+/**
+ * CustomCompositeComponent — user-defined subcircuit as a component.
+ *
+ * Extends CompositeElm to provide full subcircuit simulation: internal
+ * child components are created from the model dump, stamped into the
+ * parent circuit's MNA matrix, and stepped each iteration.
+ */
+import { CompositeElm } from '../base/CompositeElm.js';
+import { createPin, SIDE_W, SIDE_E } from '../base/ChipComponent.js';
 import type { EditInfo } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { CustomCompositeModel } from './CustomCompositeModel.js';
 
-/**
- * Custom Composite Component — user-defined subcircuit as a component.
- * Stores a subcircuit dump and presents external connections as chip pins.
- */
-export class CustomCompositeComponent extends ChipComponent {
+export class CustomCompositeComponent extends CompositeElm {
     model: CustomCompositeModel;
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number; model?: CustomCompositeModel }) {
         super(args);
         this.model = args.model ?? new CustomCompositeModel();
+        if (args.model) {
+            this.loadSubcircuit();
+        } else {
+            const existing = CustomCompositeModel.getModelWithName(CustomCompositeModel.lastModelName);
+            if (existing) {
+                this.model = existing;
+            }
+            this.loadSubcircuit();
+        }
     }
 
     getChipName(): string { return 'Composite'; }
+
+    /** Return the component dump lines from the model */
+    override getComponentDumps(): string[] {
+        return this.model.componentDumps;
+    }
 
     override setupPins(): void {
         const n = this.model.pinNames.length;
@@ -36,19 +54,35 @@ export class CustomCompositeComponent extends ChipComponent {
     }
 
     override execute(): void {
-        // Subcircuit execution is a placeholder — the actual simulation
-        // stamps internal components into the parent circuit.
-        // For basic digital subcircuits, output pins track input states.
-        // A full subcircuit simulator would need internal component iteration.
-        const halfPins = Math.ceil(this.model.pinNames.length / 2);
-        // Copy first half (inputs) to second half (outputs) as a basic pass-through
-        for (let i = halfPins; i < this.model.pinNames.length; i++) {
-            if (i < this.pins.length) {
-                // Default pass-through for demo mode
-                this.pins[i].value = false;
+        // Simulation is handled by children via CompositeElm stamp/doStep delegation.
+        // Nothing to do here for digital output computation — the MNA solution
+        // determines all node voltages including output pins.
+    }
+
+    /** Load (or reload) the subcircuit from the current model data */
+    private loadSubcircuit(): void {
+        const dumps = this.getComponentDumps();
+        if (dumps.length === 0) return;
+
+        // Build externalNodes mapping: pin i → subcircuit-local node i
+        const pinCount = this.model.pinNames.length;
+        const extNodes: number[] = [];
+        if (this.model.extList.length > 0) {
+            // Use extList from model if available (from serialization)
+            for (let i = 0; i < this.model.extList.length; i++) {
+                extNodes.push(this.model.extList[i].node);
+            }
+        } else {
+            // Default: pin index = subcircuit-local node index
+            for (let i = 0; i < pinCount; i++) {
+                extNodes.push(i);
             }
         }
+
+        this.loadComposite(extNodes, dumps);
     }
+
+    // ---- Serialization ----
 
     override getDumpType(): number | string { return 410; }
 
@@ -76,11 +110,24 @@ export class CustomCompositeComponent extends ChipComponent {
             this.model = CustomCompositeModel.create(pinNames, dump);
             this.setupPins();
             this.setPoints();
-            this.allocNodes();
+            this.loadSubcircuit();
         } catch {
             // Keep defaults on parse failure
         }
     }
+
+    // ---- Model dump (model definitions precede component definition) ----
+
+    override dumpModel(): string | null {
+        // Dump the model if it hasn't been dumped yet
+        const existing = CustomCompositeModel.modelMap.get(this.model.name);
+        if (existing && !existing.dumped) {
+            return existing.dump();
+        }
+        return null;
+    }
+
+    // ---- Edit Info ----
 
     override getEditInfo(n: number): EditInfo | null {
         const pc = this.model.pinNames.length;
@@ -90,7 +137,10 @@ export class CustomCompositeComponent extends ChipComponent {
         if (n === pc) {
             return { name: 'Circuit dump', text: this.model.circuitDump.slice(0, 50) + '...' };
         }
-        return super.getEditInfo(n - pc - 1);
+        if (n === pc + 1) {
+            return { name: 'Edit model', button: 'Edit Model' };
+        }
+        return super.getEditInfo(n - pc - 2);
     }
 
     override setEditValue(_n: number, ei: EditInfo): void {
@@ -100,18 +150,21 @@ export class CustomCompositeComponent extends ChipComponent {
             else if (ei.value !== undefined) this.model.pinNames[_n] = String(ei.value);
             this.setupPins();
             this.setPoints();
-            this.allocNodes();
+            this.loadSubcircuit();
             return;
         }
         if (_n === pc) {
             if (ei.text !== undefined) this.model.parseDump(ei.text);
             else if (ei.value !== undefined) this.model.parseDump(String(ei.value));
-            this.setupPins();
-            this.setPoints();
-            this.allocNodes();
+            this.loadSubcircuit();
             return;
         }
-        super.setEditValue(_n - pc - 1, ei);
+        if (_n === pc + 1) {
+            // Button action — the UI layer should open EditCompositeModelDialog
+            // Store the model reference so the UI can access it
+            return;
+        }
+        super.setEditValue(_n - pc - 2, ei);
     }
 }
 

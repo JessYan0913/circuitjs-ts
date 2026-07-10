@@ -1,4 +1,5 @@
 import type { SimulationManager, CircuitComponent } from '@circuitjs/core';
+import type { ScopeConfig } from '@circuitjs/shared';
 import type { CircuitRenderer, RenderTransform } from '../canvas/CircuitRenderer.js';
 
 export interface CircuitStore {
@@ -15,6 +16,24 @@ export interface CircuitStore {
     showCurrent: boolean;
     showVoltageLabels: boolean;
 
+    // Display options
+    showValues: boolean;
+    smallGrid: boolean;
+    euroResistors: boolean;
+
+    // UI panels
+    showSliders: boolean;
+
+    // Undo state (for menu enable/disable)
+    canUndo: boolean;
+    canRedo: boolean;
+
+    // Slider components (components implementing Adjustable)
+    sliderComponents: Array<{ id: number; name: string; value: number }>;
+
+    // Scopes
+    scopes: ScopeConfig[];
+
     // Actions
     setSimManager: (mgr: SimulationManager | null) => void;
     setRunning: (running: boolean) => void;
@@ -22,6 +41,15 @@ export interface CircuitStore {
     setComponents: (comps: CircuitComponent[]) => void;
     setTransform: (t: RenderTransform) => void;
     setShowCurrent: (v: boolean) => void;
+    setShowVoltageLabels: (v: boolean) => void;
+    setShowValues: (v: boolean) => void;
+    setSmallGrid: (v: boolean) => void;
+    setEuroResistors: (v: boolean) => void;
+    setShowSliders: (v: boolean) => void;
+    setCanUndo: (v: boolean) => void;
+    setCanRedo: (v: boolean) => void;
+    setSliderComponents: (components: Array<{ id: number; name: string; value: number }>) => void;
+    setScopes: (scopes: ScopeConfig[]) => void;
     autoCenter: () => void;
 }
 

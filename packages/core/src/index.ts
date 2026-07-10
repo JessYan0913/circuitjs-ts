@@ -11,7 +11,14 @@ export * from './components/base/CircuitComponent.js';
 export * from './components/base/GraphicElm.js';
 export * from './components/base/Polygon.js';
 export * from './components/base/Point.js';
+export * from './components/base/ChipComponent.js';
+export * from './components/base/CompositeElm.js';
 export * from './components/registry.js';
+export { CustomLogicModel } from './components/composite/CustomLogicModel.js';
+export { CustomCompositeModel } from './components/composite/CustomCompositeModel.js';
+export { CustomCompositeComponent } from './components/composite/CustomCompositeComponent.js';
+export { CustomCompositeChipComponent } from './components/composite/CustomCompositeChipComponent.js';
+export { CustomLogicComponent } from './components/composite/CustomLogicComponent.js';
 
 export * from './demo.js';
 

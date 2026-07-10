@@ -1,14 +1,18 @@
-import { ChipComponent, createPin, SIDE_W, SIDE_E } from '../base/ChipComponent.js';
+/**
+ * CustomCompositeChipComponent — user-defined subcircuit as a chip with
+ * explicit input/output pin classification and full subcircuit simulation.
+ *
+ * Extends CompositeElm: internal child components are created from the
+ * model dump, stamped into the parent circuit's MNA matrix, and stepped
+ * each iteration.
+ */
+import { CompositeElm } from '../base/CompositeElm.js';
+import { createPin, SIDE_W, SIDE_E } from '../base/ChipComponent.js';
 import type { EditInfo } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { CustomCompositeModel } from './CustomCompositeModel.js';
 
-/**
- * Custom Composite Chip — user-defined subcircuit presented as a chip with named pins.
- * Similar to CustomCompositeComponent but with chip-style rendering and
- * explicit input/output pin classification.
- */
-export class CustomCompositeChipComponent extends ChipComponent {
+export class CustomCompositeChipComponent extends CompositeElm {
     model: CustomCompositeModel;
     /** Which pins are inputs (vs outputs) — stored as a bitmask string */
     inputFlags = '';
@@ -16,9 +20,14 @@ export class CustomCompositeChipComponent extends ChipComponent {
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number; model?: CustomCompositeModel }) {
         super(args);
         this.model = args.model ?? new CustomCompositeModel();
+        this.loadSubcircuit();
     }
 
     getChipName(): string { return 'Chip'; }
+
+    override getComponentDumps(): string[] {
+        return this.model.componentDumps;
+    }
 
     override setupPins(): void {
         const n = this.model.pinNames.length;
@@ -43,26 +52,36 @@ export class CustomCompositeChipComponent extends ChipComponent {
     }
 
     override execute(): void {
-        // Base subcircuit execution — output pins track input states
-        // A full implementation would step internal components
-        const halfPins = Math.ceil(this.model.pinNames.length / 2);
-        for (let i = halfPins; i < this.model.pinNames.length; i++) {
-            if (i < this.pins.length) {
-                const inputIdx = i - halfPins;
-                if (inputIdx < halfPins && inputIdx < this.pins.length) {
-                    this.pins[i].value = this.pins[inputIdx].value;
-                }
-            }
-        }
+        // Simulation is handled by children via CompositeElm stamp/doStep delegation.
     }
 
+    /** Load (or reload) the subcircuit from the current model data */
+    private loadSubcircuit(): void {
+        const dumps = this.getComponentDumps();
+        if (dumps.length === 0) return;
+
+        const pinCount = this.model.pinNames.length;
+        const extNodes: number[] = [];
+        if (this.model.extList.length > 0) {
+            for (let i = 0; i < this.model.extList.length; i++) {
+                extNodes.push(this.model.extList[i].node);
+            }
+        } else {
+            for (let i = 0; i < pinCount; i++) {
+                extNodes.push(i);
+            }
+        }
+
+        this.loadComposite(extNodes, dumps);
+    }
+
+    // ---- Serialization ----
+
     override getDumpType(): number | string {
-        // CustomCompositeChip uses a string-based dump type
         return 'cchip';
     }
 
     override dump(): string {
-        // Override to use string-based dump format: cchip x y x2 y2 flags ...data...
         let s = `cchip ${this.x} ${this.y} ${this.x2} ${this.y2} ${this.flags}`;
         s += ` ${this.model.pinNames.length}`;
         for (const name of this.model.pinNames) s += ` ${name}`;
@@ -86,11 +105,21 @@ export class CustomCompositeChipComponent extends ChipComponent {
             this.model = CustomCompositeModel.create(pinNames, dump);
             this.setupPins();
             this.setPoints();
-            this.allocNodes();
+            this.loadSubcircuit();
         } catch {
             // Keep defaults
         }
     }
+
+    override dumpModel(): string | null {
+        const existing = CustomCompositeModel.modelMap.get(this.model.name);
+        if (existing && !existing.dumped) {
+            return existing.dump();
+        }
+        return null;
+    }
+
+    // ---- Edit Info ----
 
     override getEditInfo(n: number): EditInfo | null {
         const pc = this.model.pinNames.length;
@@ -108,7 +137,10 @@ export class CustomCompositeChipComponent extends ChipComponent {
         if (n === pc * 2) {
             return { name: 'Circuit dump', text: this.model.circuitDump.slice(0, 50) + '...' };
         }
-        return super.getEditInfo(n - pc * 2 - 1);
+        if (n === pc * 2 + 1) {
+            return { name: 'Edit model', button: 'Edit Model' };
+        }
+        return super.getEditInfo(n - pc * 2 - 2);
     }
 
     override setEditValue(_n: number, ei: EditInfo): void {
@@ -118,7 +150,7 @@ export class CustomCompositeChipComponent extends ChipComponent {
             else if (ei.value !== undefined) this.model.pinNames[_n] = String(ei.value);
             this.setupPins();
             this.setPoints();
-            this.allocNodes();
+            this.loadSubcircuit();
             return;
         }
         if (_n < pc * 2 && ei.checkboxState !== undefined) {
@@ -128,17 +160,21 @@ export class CustomCompositeChipComponent extends ChipComponent {
             this.inputFlags = arr.join('');
             this.setupPins();
             this.setPoints();
-            this.allocNodes();
+            this.loadSubcircuit();
             return;
         }
         if (_n === pc * 2) {
             if (ei.text !== undefined) this.model.parseDump(ei.text);
             else if (ei.value !== undefined) this.model.parseDump(String(ei.value));
+            this.loadSubcircuit();
             return;
         }
-        super.setEditValue(_n - pc * 2 - 1, ei);
+        if (_n === pc * 2 + 1) {
+            // Button action — the UI layer should open EditCompositeModelDialog
+            return;
+        }
+        super.setEditValue(_n - pc * 2 - 2, ei);
     }
 }
 
-// Register with string key
 registerComponent('cchip', 'CustomCompositeChipElm', CustomCompositeChipComponent);

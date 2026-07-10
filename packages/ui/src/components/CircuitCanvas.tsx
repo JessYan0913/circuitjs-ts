@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
-import { Serializer } from '@circuitjs/core';
+import { Serializer, type CircuitComponent } from '@circuitjs/core';
+import { captureScopePoint, getScopeValue } from '../canvas/scope-capture.js';
 import { CircuitRenderer } from '../canvas/CircuitRenderer.js';
 import { InteractionHandler, type ContextMenuState } from '../canvas/InteractionHandler.js';
 import { UndoStack } from '../canvas/UndoStack.js';
@@ -9,7 +10,13 @@ import { setRendererRef, setCanvasSize } from '../store/types.js';
 const MENU_WIDTH = 160;
 const MENU_ITEM_HEIGHT = 28;
 
-export function CircuitCanvas() {
+export interface CircuitCanvasProps {
+    onEditComponent?: (component: CircuitComponent) => void;
+    onAddComponentType?: string | null;
+    onUndoStateChange?: (canUndo: boolean, canRedo: boolean) => void;
+}
+
+export function CircuitCanvas({ onEditComponent, onAddComponentType, onUndoStateChange }: CircuitCanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const rendererRef = useRef<CircuitRenderer | null>(null);
@@ -17,6 +24,7 @@ export function CircuitCanvas() {
     const undoStackRef = useRef<UndoStack>(new UndoStack());
     const rafRef = useRef<number>(0);
     const lastFrameTimeRef = useRef<number>(0);
+    const prevAddTypeRef = useRef<string | null | undefined>(null);
 
     // Context menu state
     const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -50,7 +58,13 @@ export function CircuitCanvas() {
     // Take undo snapshot
     const takeUndoSnapshot = useCallback(() => {
         undoStackRef.current.snapshot(useCircuitStore.getState().components);
-    }, []);
+        onUndoStateChange?.(undoStackRef.current.canUndo(), undoStackRef.current.canRedo());
+    }, [onUndoStateChange]);
+
+    // Notify undo state after restore
+    const notifyUndoState = useCallback(() => {
+        onUndoStateChange?.(undoStackRef.current.canUndo(), undoStackRef.current.canRedo());
+    }, [onUndoStateChange]);
 
     // Restore undo/redo state
     const restoreFromUndo = useCallback((direction: 'undo' | 'redo') => {
@@ -83,7 +97,9 @@ export function CircuitCanvas() {
                 }
             }
         }
-    }, []);
+
+        notifyUndoState();
+    }, [notifyUndoState]);
 
     useEffect(() => {
         const renderer = new CircuitRenderer(
@@ -136,12 +152,37 @@ export function CircuitCanvas() {
                     const canvas = canvasRef.current;
                     if (canvas) canvas.style.cursor = cursor;
                 },
+                onEditComponent: (component) => {
+                    onEditComponent?.(component);
+                },
             },
         );
         interactionRef.current = handler;
 
         return () => { setRendererRef(null); };
-    }, [takeUndoSnapshot]);
+    }, [takeUndoSnapshot, onEditComponent]);
+
+    // Watch onAddComponentType prop to set add type on handler
+    useEffect(() => {
+        if (onAddComponentType !== prevAddTypeRef.current) {
+            prevAddTypeRef.current = onAddComponentType;
+            interactionRef.current?.setAddType(onAddComponentType ?? null);
+        }
+    }, [onAddComponentType]);
+
+    // Sync renderer options from store
+    useEffect(() => {
+        const unsub = useCircuitStore.subscribe((state) => {
+            const renderer = rendererRef.current;
+            if (!renderer) return;
+            // Trigger re-render when options change
+            const ctx = canvasRef.current?.getContext('2d');
+            if (ctx && canvasRef.current) {
+                renderer.render(ctx, canvasRef.current.width, canvasRef.current.height);
+            }
+        });
+        return unsub;
+    }, []);
 
     // Sync hovered component to renderer before each render
     const renderFrame = useCallback((timestamp: number) => {
@@ -157,6 +198,19 @@ export function CircuitCanvas() {
             lastFrameTimeRef.current = timestamp;
             mgr.update();
             mgr.updateCurrentAnimation(frameDelta);
+
+            // Capture scope data for all active scopes
+            const scopes = useCircuitStore.getState().scopes;
+            const components = useCircuitStore.getState().components;
+            for (const scope of scopes) {
+                for (const plot of scope.plots) {
+                    const comp = components.find((c) => c.id === plot.componentId);
+                    if (comp && comp.volts.length > 0) {
+                        captureScopePoint(plot, comp.volts[0], plot.maxValues.length);
+                    }
+                }
+            }
+
             useCircuitStore.getState().setTime(mgr.getTime());
         }
 
@@ -325,18 +379,17 @@ export function CircuitCanvas() {
                 const rect = canvas.getBoundingClientRect();
                 const tx = touch.clientX - rect.left;
                 const ty = touch.clientY - rect.top;
+                const comp = handler?.state.mouseElm;
                 if (now - lastTap < 300 && Math.abs(tx - lastX) < 30 && Math.abs(ty - lastY) < 30) {
-                    // Double tap — open property editor if on component
-                    const comp = handler?.state.mouseElm;
-                    if (comp && handler) {
-                        // Future: open property editor dialog
+                    if (comp) {
+                        onEditComponent?.(comp);
                     }
                 }
                 touchEndRef.current = { x: tx, y: ty, time: now };
             }
         }
         touchRef.current = null;
-    }, []);
+    }, [onEditComponent]);
 
     const touchEndRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
