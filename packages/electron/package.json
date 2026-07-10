@@ -6,7 +6,7 @@
     "main": "dist/main.js",
     "scripts": {
         "build": "tsc",
-        "dev": "tsc && electron .",
+        "dev": "npm -w packages/ui run build && tsc && electron .",
         "clean": "rm -rf dist"
     },
     "dependencies": {
