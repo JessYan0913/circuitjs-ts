@@ -3,78 +3,126 @@ import type { StampContext, EditInfo, Graphics } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { setVoltageColor, drawThickLinePt, drawPost, interpPoint, interpPointPerp } from '../drawutils.js';
 
-/** Tri-State Buffer */
+/** Tri-State Buffer (voltage source + internal node + resistor model) */
 export class TriStateComponent extends CircuitComponent {
+    r_on = 0.1;
+    r_off = 1e10;
+    private open = false;
+
+    private point3 = { x: 0, y: 0 };
+    private lead3 = { x: 0, y: 0 };
+    private gatePoints: { x: number; y: number }[] = [];
+
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
         this.noDiagonal = true;
     }
 
     getDumpType(): number | string { return 180; }
-    getPostCount(): number { return 3; } // IN, OUT, EN
+    getPostCount(): number { return 3; }
+    getInternalNodeCount(): number { return 1; }
     getVoltageSourceCount(): number { return 1; }
-
-    get isEnabled(): boolean {
-        return this.volts[2] > 2.5;
-    }
+    nonLinear(): boolean { return true; }
 
     stamp(context: StampContext): void {
-        // Output voltage source (driven when enabled)
-        context.stampVoltageSource(0, this.nodes[1], this.voltSource);
+        context.stampVoltageSource(0, this.nodes[3], this.voltSource);
+        context.stampNonLinear(this.nodes[3]);
+        context.stampNonLinear(this.nodes[1]);
     }
 
     doStep(context: StampContext): void {
-        if (this.isEnabled) {
-            // Drive output to input voltage (or logical level)
-            const inVoltage = this.volts[0];
-            context.updateVoltageSource(0, this.nodes[1], this.voltSource, inVoltage > 2.5 ? 5 : 0);
-        } else {
-            // High impedance: don't drive (remove the voltage source effect)
-            context.updateVoltageSource(0, this.nodes[1], this.voltSource, 0);
-        }
+        this.open = this.volts[2] < 2.5;
+        const resistance = this.open ? this.r_off : this.r_on;
+        context.stampResistor(this.nodes[3], this.nodes[1], resistance);
+        context.updateVoltageSource(0, this.nodes[3], this.voltSource, this.volts[0] > 2.5 ? 5 : 0);
     }
 
-    setPoints(): void {
+    calculateCurrent(): void {
+        this.current = (this.volts[3] - this.volts[1]) / (this.open ? this.r_off : this.r_on);
+    }
+
+    getCurrentIntoNode(n: number): number {
+        if (n === 1) return this.current;
+        return 0;
+    }
+
+    getConnection(n1: number, n2: number): boolean { return false; }
+    hasGroundConnection(n1: number): boolean { return n1 === 1; }
+
+    override setPoints(): void {
         super.setPoints();
-        this.calcLeads(16);
+        this.calcLeads(32);
+        const hs = 16;
+        const ww = Math.min(16, Math.floor(this.dn / 2));
+
+        // Triangle
+        this.gatePoints = [
+            interpPointPerp(this.lead1, this.lead2, 0, hs + 2),
+            interpPointPerp(this.lead1, this.lead2, 1, hs + 2),
+            interpPoint(this.point1, this.point2, 0.5 + (ww - 2) / this.dn),
+        ];
+
+        this.point3 = interpPointPerp(this.point1, this.point2, 0.5, -hs);
+        this.lead3 = interpPointPerp(this.point1, this.point2, 0.5, -hs / 2);
+    }
+
+    getPost(n: number): { x: number; y: number } {
+        if (n === 0) return this.point1;
+        if (n === 1) return this.point2;
+        return this.point3;
     }
 
     draw(g: Graphics): void {
-        const mid = interpPoint(this.point1, this.point2, 0.5);
-        const p5 = interpPoint(this.point1, this.point2, 0.3);
-        const p6 = interpPoint(this.point1, this.point2, 0.7);
+        this.setBbox(this.point1.x, this.point1.y, this.point2.x, this.point2.y);
 
-        // Draw enable lead
-        setVoltageColor(g, this.volts[2], this);
-        g.drawLine(mid.x, this.y + 4, mid.x, this.y + 20);
-        drawPost(g, { x: mid.x, y: this.y + 20 });
-
-        // Draw IN lead
         setVoltageColor(g, this.volts[0], this);
-        drawThickLinePt(g, this.point1, p5);
-
-        // OUT lead
+        drawThickLinePt(g, this.point1, this.lead1);
         setVoltageColor(g, this.volts[1], this);
-        drawThickLinePt(g, p6, this.point2);
+        drawThickLinePt(g, this.lead2, this.point2);
 
-        // Draw tri-state buffer symbol (triangle with enable)
-        g.setColor('#FFFFFF');
-        g.setLineWidth(2);
+        g.setColor('#CCCCCC');
+        if (this.gatePoints.length >= 3) {
+            g.drawPolyline(
+                this.gatePoints.map(p => p.x),
+                this.gatePoints.map(p => p.y), 3);
+        }
 
-        // Triangle (buffer)
-        g.drawLine(p5.x, p5.y, p6.x, mid.y);
-        g.drawLine(p5.x, p5.y, p6.x, p6.y);
-        g.drawLine(p6.x, p6.y, p6.x, p6.y); // horizontal output
-
-        // Enable control arrow
-        g.drawLine(mid.x - 4, mid.y, mid.x + 4, mid.y);
+        setVoltageColor(g, this.volts[2], this);
+        drawThickLinePt(g, this.point3, this.lead3);
 
         drawPost(g, this.point1);
         drawPost(g, this.point2);
+        drawPost(g, this.point3);
     }
 
     getInfo(): string[] {
-        return [`Tri-State (${this.isEnabled ? 'EN' : 'DIS'})`];
+        return [
+            'tri-state buffer',
+            this.open ? 'open' : 'closed',
+            `Vd = ${(this.volts[0] - this.volts[1]).toFixed(2)} V`,
+            `I = ${this.current.toFixed(3)} A`,
+            `Vc = ${this.volts[2].toFixed(2)} V`,
+        ];
+    }
+
+    override getEditInfo(n: number): EditInfo | null {
+        if (n === 0) return { name: 'On Resistance (ohms)', value: this.r_on };
+        if (n === 1) return { name: 'Off Resistance (ohms)', value: this.r_off };
+        return null;
+    }
+
+    override setEditValue(_n: number, ei: EditInfo): void {
+        if (_n === 0 && ei.value !== undefined && ei.value > 0) this.r_on = ei.value;
+        if (_n === 1 && ei.value !== undefined && ei.value > 0) this.r_off = ei.value;
+    }
+
+    override dump(): string {
+        return super.dump() + ` ${this.r_on} ${this.r_off}`;
+    }
+
+    override handleDumpData(tokens: string[], start: number): void {
+        if (tokens.length > start) this.r_on = parseFloat(tokens[start]) || 0.1;
+        if (tokens.length > start + 1) this.r_off = parseFloat(tokens[start + 1]) || 1e10;
     }
 }
 

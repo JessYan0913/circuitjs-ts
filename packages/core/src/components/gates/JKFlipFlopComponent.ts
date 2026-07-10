@@ -2,115 +2,102 @@ import { ChipComponent, createPin, SIDE_W, SIDE_E } from '../base/ChipComponent.
 import type { EditInfo } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 
-/** JK Flip-Flop with optional Preset and Clear */
+/** JK Flip-Flop (default negative-edge triggered, matches Java JKFlipFlopElm) */
 export class JKFlipFlopComponent extends ChipComponent {
-    private clockState = false;
-    hasReset = false;
-    hasPreset = false;
+    static readonly FLAG_RESET = 2;
+    static readonly FLAG_POSITIVE_EDGE = 4;
 
-    getChipName(): string { return 'JK FF'; }
+    getChipName(): string { return 'JK flip-flop'; }
+
+    hasReset(): boolean { return (this.flags & JKFlipFlopComponent.FLAG_RESET) !== 0; }
+    positiveEdgeTriggered(): boolean { return (this.flags & JKFlipFlopComponent.FLAG_POSITIVE_EDGE) !== 0; }
 
     override setupPins(): void {
         this.sizeX = 2;
-        this.sizeY = this.hasReset || this.hasPreset ? 4 : 3;
-        const pins = [
+        this.sizeY = 3;
+        this.pins = [
             createPin(0, SIDE_W, 'J'),
-            createPin(1, SIDE_W, 'K'),
-            createPin(2, SIDE_W, '>'),
+            createPin(1, SIDE_W, ''),
+            createPin(2, SIDE_W, 'K'),
+            createPin(0, SIDE_E, 'Q'),
+            createPin(2, SIDE_E, 'Q'),
         ];
-        pins[2].clock = true;
-        if (this.hasReset) {
-            pins.push(createPin(3, SIDE_W, 'R'));
+        this.pins[1].clock = true;
+        this.pins[1].bubble = !this.positiveEdgeTriggered();
+        this.pins[3].output = true;
+        this.pins[4].output = true;
+        this.pins[4].lineOver = true;
+
+        if (this.hasReset()) {
+            this.pins.push(createPin(1, SIDE_E, 'R'));
         }
-        if (this.hasPreset) {
-            pins.push(createPin(this.hasReset ? 4 : 3, SIDE_W, 'S'));
-        }
-        pins.push(createPin(0, SIDE_E, 'Q'));
-        pins.push(createPin(1, SIDE_E, 'Q̅'));
-        pins[pins.length - 1].lineOver = true;
-        pins[pins.length - 1].output = true;
-        pins[pins.length - 2].output = true;
-        this.pins = pins;
     }
 
+    override getPostCount(): number {
+        return 5 + (this.hasReset() ? 1 : 0);
+    }
+
+    override getVoltageSourceCount(): number { return 2; }
+
     override execute(): void {
-        const clk = this.pins[2].value;
-        const j = this.pins[0].value;
-        const k = this.pins[1].value;
-
-        // Get current Q state from output pin
-        let q = this.pins[this.pins.length - 2].value;
-
-        // Handle preset (active low)
-        const presetPin = this.hasPreset ? (this.hasReset ? 4 : 3) : -1;
-        if (presetPin >= 0 && !this.pins[presetPin].value) {
-            this.pins[this.pins.length - 2].value = true;
-            this.pins[this.pins.length - 1].value = false;
-            this.clockState = clk;
-            return;
+        let transition: boolean;
+        if (this.positiveEdgeTriggered()) {
+            transition = this.pins[1].value && !this.lastClock;
+        } else {
+            transition = !this.pins[1].value && this.lastClock;
         }
 
-        // Handle reset (active low)
-        const resetPin = this.hasReset ? 3 : -1;
-        if (resetPin >= 0 && !this.pins[resetPin].value) {
-            this.pins[this.pins.length - 2].value = false;
-            this.pins[this.pins.length - 1].value = true;
-            this.clockState = clk;
-            return;
-        }
-
-        // Rising edge clock
-        if (clk && !this.clockState) {
-            if (j && !k) {
-                q = true;   // set
-            } else if (!j && k) {
-                q = false;  // reset
-            } else if (j && k) {
-                q = !q;     // toggle
+        if (transition) {
+            let q = this.pins[3].value;
+            if (this.pins[0].value) {
+                if (this.pins[2].value) {
+                    q = !q;  // J=1, K=1 → toggle
+                } else {
+                    q = true; // J=1, K=0 → set
+                }
+            } else if (this.pins[2].value) {
+                q = false;   // J=0, K=1 → reset
             }
-            // else j=0,k=0: hold
-            this.pins[this.pins.length - 2].value = q;
-            this.pins[this.pins.length - 1].value = !q;
+            // J=0, K=0 → hold (q unchanged)
+            this.pins[3].value = q;
+            this.pins[4].value = !q;
         }
-        this.clockState = clk;
+        this.lastClock = this.pins[1].value;
+
+        if (this.hasReset() && this.pins[5].value) {
+            this.pins[3].value = false;
+            this.pins[4].value = true;
+        }
     }
 
     override getDumpType(): number | string { return 156; }
 
-    override dump(): string {
-        return super.dump() + ` ${this.hasReset ? 1 : 0} ${this.hasPreset ? 1 : 0}`;
-    }
-
-    override handleDumpData(tokens: string[], start: number): void {
-        if (tokens.length > start) this.hasReset = tokens[start] !== '0';
-        if (tokens.length > start + 1) this.hasPreset = tokens[start + 1] !== '0';
-        this.setupPins();
-        this.setPoints();
-        this.allocNodes();
-    }
-
     override getEditInfo(n: number): EditInfo | null {
-        if (n === 0) return { name: 'Has Reset', checkbox: true, checkboxState: this.hasReset };
-        if (n === 1) return { name: 'Has Preset', checkbox: true, checkboxState: this.hasPreset };
-        return super.getEditInfo(n - 2);
+        if (n === 2) {
+            return { name: 'Reset Pin', checkbox: true, checkboxState: this.hasReset() };
+        }
+        if (n === 3) {
+            return { name: 'Positive Edge Triggered', checkbox: true, checkboxState: this.positiveEdgeTriggered() };
+        }
+        return super.getEditInfo(n);
     }
 
     override setEditValue(_n: number, ei: EditInfo): void {
-        if (_n === 0 && ei.checkboxState !== undefined) {
-            this.hasReset = ei.checkboxState;
+        if (_n === 2 && ei.checkboxState !== undefined) {
+            if (ei.checkboxState) this.flags |= JKFlipFlopComponent.FLAG_RESET;
+            else this.flags &= ~JKFlipFlopComponent.FLAG_RESET;
             this.setupPins();
-            this.setPoints();
             this.allocNodes();
+            this.setPoints();
             return;
         }
-        if (_n === 1 && ei.checkboxState !== undefined) {
-            this.hasPreset = ei.checkboxState;
-            this.setupPins();
-            this.setPoints();
-            this.allocNodes();
+        if (_n === 3 && ei.checkboxState !== undefined) {
+            if (ei.checkboxState) this.flags |= JKFlipFlopComponent.FLAG_POSITIVE_EDGE;
+            else this.flags &= ~JKFlipFlopComponent.FLAG_POSITIVE_EDGE;
+            this.pins[1].bubble = !this.positiveEdgeTriggered();
             return;
         }
-        super.setEditValue(_n - 2, ei);
+        super.setEditValue(_n, ei);
     }
 }
 

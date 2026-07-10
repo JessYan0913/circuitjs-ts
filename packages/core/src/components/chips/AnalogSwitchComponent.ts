@@ -3,10 +3,17 @@ import type { StampContext, EditInfo, Graphics } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { setVoltageColor, drawThickLinePt, drawPost, interpPoint, interpPointPerp } from '../drawutils.js';
 
-/** Single-Pole Single-Throw Analog Switch */
+/** Single-Pole Single-Throw Analog Switch (nonlinear resistor model) */
 export class AnalogSwitchComponent extends CircuitComponent {
-    private readonly R_ON = 1;
-    private readonly R_OFF = 1e8;
+    static readonly FLAG_INVERT = 1;
+
+    r_on = 20;
+    r_off = 1e10;
+    private open = false;
+
+    // Geometry points
+    private point3 = { x: 0, y: 0 };
+    private lead3 = { x: 0, y: 0 };
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
@@ -14,79 +21,119 @@ export class AnalogSwitchComponent extends CircuitComponent {
     }
 
     getDumpType(): number | string { return 159; }
-    getPostCount(): number { return 3; } // IN, OUT, CTRL
+    getPostCount(): number { return 3; }
+    nonLinear(): boolean { return true; }
 
-    get isClosed(): boolean {
-        return this.volts[2] > 2.5;
-    }
+    get isClosed(): boolean { return !this.open; }
 
     stamp(context: StampContext): void {
-        // Stamping done per-step via voltage source model
-        context.stampVoltageSource(this.nodes[0], this.nodes[1], this.voltSource);
+        context.stampNonLinear(this.nodes[0]);
+        context.stampNonLinear(this.nodes[1]);
     }
 
     doStep(context: StampContext): void {
-        // When closed: small voltage drop (IN = OUT)
-        // When open: no connection
-        if (this.isClosed) {
-            // Closed: drive OUT to same voltage as IN (with small resistance)
-            context.updateVoltageSource(this.nodes[0], this.nodes[1], this.voltSource, 0);
-        } else {
-            // Open: drive with a large voltage to create high impedance effectively
-            context.updateVoltageSource(this.nodes[0], this.nodes[1], this.voltSource, 0);
-            // Use high-resistor stamp instead
+        let open = this.volts[2] < 2.5;
+        if ((this.flags & AnalogSwitchComponent.FLAG_INVERT) !== 0) {
+            open = !open;
         }
+        this.open = open;
+        const resistance = open ? this.r_off : this.r_on;
+        context.stampResistor(this.nodes[0], this.nodes[1], resistance);
     }
 
-    getVoltageSourceCount(): number { return 1; }
+    calculateCurrent(): void {
+        this.current = (this.volts[0] - this.volts[1]) / (this.open ? this.r_off : this.r_on);
+    }
 
-    setPoints(): void {
+    getCurrentIntoNode(n: number): number {
+        if (n === 2) return 0;
+        if (n === 0) return -this.current;
+        return this.current;
+    }
+
+    override setPoints(): void {
         super.setPoints();
-        this.calcLeads(16);
+        this.calcLeads(32);
+        const openhs = 16;
+        this.point3 = interpPointPerp(this.point1, this.point2, 0.5, -openhs);
+        this.lead3 = interpPointPerp(this.point1, this.point2, 0.5, -openhs / 2);
+    }
+
+    getPost(n: number): { x: number; y: number } {
+        if (n === 0) return this.point1;
+        if (n === 1) return this.point2;
+        return this.point3;
+    }
+
+    getConnection(n1: number, n2: number): boolean {
+        if (n1 === 2 || n2 === 2) return false;
+        return true;
     }
 
     draw(g: Graphics): void {
-        const mid = interpPoint(this.point1, this.point2, 0.5);
-        const p5 = interpPoint(this.point1, this.point2, 0.25);
-        const p6 = interpPoint(this.point1, this.point2, 0.75);
+        const openhs = 16;
+        const hs = this.open ? openhs : 0;
 
-        // Draw control lead
-        setVoltageColor(g, this.volts[2], this);
-        // Control pin is below the switch
-        const ctrlPt = { x: mid.x, y: this.y + 20 };
-        g.drawLine(mid.x, mid.y + 4, ctrlPt.x, ctrlPt.y);
-        drawPost(g, ctrlPt);
+        this.setBbox(this.point1.x, this.point1.y, this.point2.x, this.point2.y);
 
-        // Draw IN/OUT leads
         setVoltageColor(g, this.volts[0], this);
-        drawThickLinePt(g, this.point1, p5);
+        drawThickLinePt(g, this.point1, this.lead1);
         setVoltageColor(g, this.volts[1], this);
-        drawThickLinePt(g, p6, this.point2);
+        drawThickLinePt(g, this.lead2, this.point2);
 
-        // Draw switch symbol
-        const isClosed = this.isClosed;
-        g.setColor('#FFFFFF');
-        g.setLineWidth(2);
-        if (isClosed) {
-            g.drawLine(p5.x, p5.y, p6.x, p6.y);
-            // Shorting bar
-            const p5p = interpPointPerp(p5, p6, 1.0, 6);
-            const p6p = interpPointPerp(p5, p6, 1.0, -6);
-            g.drawLine(p5.x, p5.y, p5p.x, p5p.y);
-            g.drawLine(p6.x, p6.y, p6p.x, p6p.y);
-        } else {
-            // Open switch
-            const p5p = interpPointPerp(p5, p6, 1.0, 4);
-            g.drawLine(p5.x, p5.y, p5p.x, p5p.y);
-            g.drawLine(p6.x, p6.y, p6.x, p6.y);
-        }
+        g.setColor('#CCCCCC');
+        const ps = interpPointPerp(this.lead1, this.lead2, 1, hs);
+        drawThickLinePt(g, this.lead1, ps);
+
+        setVoltageColor(g, this.volts[2], this);
+        drawThickLinePt(g, this.point3, this.lead3);
+
+        const mid = interpPoint(this.point1, this.point2, 0.5);
+        this.setBbox(Math.min(this.point1.x, this.point2.x, this.point3.x),
+                      Math.min(this.point1.y, this.point2.y, this.point3.y),
+                      Math.max(this.point1.x, this.point2.x, this.point3.x),
+                      Math.max(this.point1.y, this.point2.y, this.point3.y));
 
         drawPost(g, this.point1);
         drawPost(g, this.point2);
+        drawPost(g, this.point3);
     }
 
     getInfo(): string[] {
-        return [`Analog Switch (${this.isClosed ? 'ON' : 'OFF'})`];
+        return [
+            'analog switch',
+            this.open ? 'open' : 'closed',
+            `Vd = ${(this.volts[0] - this.volts[1]).toFixed(2)} V`,
+            `I = ${this.current.toFixed(3)} A`,
+            `Vc = ${this.volts[2].toFixed(2)} V`,
+        ];
+    }
+
+    override getEditInfo(n: number): EditInfo | null {
+        if (n === 0) {
+            return { name: 'Normally closed', checkbox: true, checkboxState: (this.flags & AnalogSwitchComponent.FLAG_INVERT) !== 0 };
+        }
+        if (n === 1) return { name: 'On Resistance (ohms)', value: this.r_on };
+        if (n === 2) return { name: 'Off Resistance (ohms)', value: this.r_off };
+        return null;
+    }
+
+    override setEditValue(_n: number, ei: EditInfo): void {
+        if (_n === 0 && ei.checkboxState !== undefined) {
+            if (ei.checkboxState) this.flags |= AnalogSwitchComponent.FLAG_INVERT;
+            else this.flags &= ~AnalogSwitchComponent.FLAG_INVERT;
+        }
+        if (_n === 1 && ei.value !== undefined && ei.value > 0) this.r_on = ei.value;
+        if (_n === 2 && ei.value !== undefined && ei.value > 0) this.r_off = ei.value;
+    }
+
+    override dump(): string {
+        return super.dump() + ` ${this.r_on} ${this.r_off}`;
+    }
+
+    override handleDumpData(tokens: string[], start: number): void {
+        if (tokens.length > start) this.r_on = parseFloat(tokens[start]) || 20;
+        if (tokens.length > start + 1) this.r_off = parseFloat(tokens[start + 1]) || 1e10;
     }
 }
 
