@@ -67,29 +67,28 @@ export class LampComponent extends CircuitComponent {
         // Compute resistance from temperature
         const nomR = this.nomV * this.nomV / this.nomPow;
         const tp = this.temp + 273.15;
-        // Tungsten filament: R = R_ref * (T/T_ref)^1.2
+        // Tungsten filament: R = R_ref * (T/T_ref)^1.2 (matches Java LampElm)
         this.resistance = nomR * Math.pow(tp / (273.15 + this.roomTemp), 1.2);
         const rMin = 0.1 * nomR;
         const rMax = 100 * nomR;
         if (this.resistance < rMin) this.resistance = rMin;
         if (this.resistance > rMax) this.resistance = rMax;
-    }
 
-    override doStep(context: StampContext): void {
-        context.stampResistor(this.nodes[0], this.nodes[1], this.resistance);
-
-        // Thermal model — update temperature using timeStep
-        if (context.timeStep > 0) {
+        // Thermal model — update temperature (once per timestep, matches Java LampElm)
+        if (this.lastTimeStep > 0) {
             const cap = 1.57e-4 * this.nomPow;
             const capW = cap * this.warmTime / 0.4;
             const capC = cap * this.coolTime / 0.4;
             const cr = this.nomPow > 0 ? 2600 / this.nomPow : 26;
 
             const power = this.getPower();
-            this.temp += power * context.timeStep / capW;
-            this.temp -= context.timeStep * (this.temp - this.roomTemp) / (capC * cr);
+            this.temp += power * this.lastTimeStep / capW;
+            this.temp -= this.lastTimeStep * (this.temp - this.roomTemp) / (capC * cr);
         }
-        this.lastTimeStep = context.timeStep;
+    }
+
+    override doStep(context: StampContext): void {
+        context.stampResistor(this.nodes[0], this.nodes[1], this.resistance);
     }
 
     override calculateCurrent(): void {

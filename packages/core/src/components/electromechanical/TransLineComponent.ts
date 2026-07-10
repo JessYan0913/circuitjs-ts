@@ -160,11 +160,9 @@ export class TransLineComponent extends CircuitComponent {
         this.ptr = (this.ptr + 1) % this.lenSteps;
     }
 
-    override calculateCurrent(): void {
-        // current1 flows through node 0 (left bottom)
-        this.current1 = (this.volts[2] - this.volts[4]) / this.imped;
-        // current2 flows through node 1 (right bottom)
-        this.current2 = (this.volts[3] - this.volts[5]) / this.imped;
+    override setCurrent(_x: number, c: number): void {
+        if (_x === this.voltSource1) this.current1 = c;
+        if (_x === this.voltSource2) this.current2 = c;
     }
 
     override getCurrentIntoNode(n: number): number {

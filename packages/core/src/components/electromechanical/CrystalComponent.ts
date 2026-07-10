@@ -2,18 +2,18 @@ import { CircuitComponent } from '../base/CircuitComponent.js';
 import type { StampContext, EditInfo, Graphics } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import {
-    setVoltageColor, drawThickLinePt, drawThickLineXY,
-    drawPost, drawValues, drawCenteredText,
+    setVoltageColor, drawThickLinePt,
+    drawPost,
 } from '../drawutils.js';
 
 /**
  * Crystal — RLC series resonance with parallel capacitance.
- * Implements the classic crystal equivalent circuit without CompositeElm.
+ * Port of Java CrystalElm (which uses CompositeElm with 4 sub-components).
  *
- * Equivalent circuit:
+ * Equivalent circuit (matches Java CrystalElm's modelString):
  *   C0 (parallel) between pin 1 and pin 2
  *   C1 (series)   between pin 1 and internal node 2
- *   L  (series)   between internal node 2 and internal node 3 (inductor companion)
+ *   L  (series)   between internal node 2 and internal node 3
  *   R  (series)   between internal node 3 and pin 2
  *
  * Node assignment:
@@ -28,10 +28,23 @@ export class CrystalComponent extends CircuitComponent {
     inductance = 2.5e-3;             // L (mH)
     seriesResistance = 6.4;           // R (ohm)
 
-    // Inductor companion model for L
-    private compResistance = 0;
-    private curSourceValue = 0;
+    // Companion model state
     private useTrapezoidal = true;
+
+    // C0 companion
+    private c0Conductance = 0;
+    private c0CurSource = 0;
+    private c0Current = 0;
+
+    // C1 companion
+    private c1Conductance = 0;
+    private c1CurSource = 0;
+    private c1Current = 0;
+
+    // L companion
+    private lResistance = 0;
+    private lCurSource = 0;
+    private lCurrent = 0;
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
@@ -40,8 +53,6 @@ export class CrystalComponent extends CircuitComponent {
     override getDumpType(): number | string { return 412; }
 
     override handleDumpData(tokens: string[], startIndex: number): void {
-        // Parameters are stored in the composite sub-components in Java.
-        // For simplicity, we dump/load them directly.
         if (tokens.length > startIndex) this.parallelCapacitance = parseFloat(tokens[startIndex]);
         if (tokens.length > startIndex + 1) this.seriesCapacitance = parseFloat(tokens[startIndex + 1]);
         if (tokens.length > startIndex + 2) this.inductance = parseFloat(tokens[startIndex + 2]);
@@ -56,81 +67,124 @@ export class CrystalComponent extends CircuitComponent {
 
     override reset(): void {
         super.reset();
-        this.curSourceValue = 0;
+        this.c0Current = 0;
+        this.c1Current = 0;
+        this.lCurrent = 0;
+        this.c0CurSource = 0;
+        this.c1CurSource = 0;
+        this.lCurSource = 0;
     }
 
     override stamp(context: StampContext): void {
-        // Parallel capacitor C0 between nodes[0] and nodes[1]
+        this.useTrapezoidal = context.integrationMethod !== 'backwardEuler';
+
         if (context.timeStep === 0) {
-            context.stampVoltageSource(this.nodes[0], this.nodes[1], this.voltSource, 0);
+            // DC: capacitors open, inductor short (no stamps needed for ideal)
+            // Resistor R provides DC path
+            context.stampResistor(this.nodes[3], this.nodes[1], this.seriesResistance);
+            return;
+        }
+
+        // === C0 (parallel) companion: G = C/dt ===
+        if (this.useTrapezoidal) {
+            this.c0Conductance = 2 * this.parallelCapacitance / context.timeStep;
         } else {
-            // Companion model for C0
-            const c0Val = this.parallelCapacitance / context.timeStep;
-            context.stampConductance(this.nodes[0], this.nodes[1], c0Val);
-            context.markRightSideChanging(this.nodes[0]);
-            context.markRightSideChanging(this.nodes[1]);
+            this.c0Conductance = this.parallelCapacitance / context.timeStep;
         }
+        context.stampConductance(this.nodes[0], this.nodes[1], this.c0Conductance);
+        context.markRightSideChanging(this.nodes[0]);
+        context.markRightSideChanging(this.nodes[1]);
 
-        // Series capacitor C1 between nodes[0] and nodes[2]
-        if (context.timeStep > 0) {
-            const c1Val = this.seriesCapacitance / context.timeStep;
-            context.stampConductance(this.nodes[0], this.nodes[2], c1Val);
-            context.markRightSideChanging(this.nodes[0]);
-            context.markRightSideChanging(this.nodes[2]);
-        }
-
-        // Inductor L companion model between nodes[2] and nodes[3]
-        if (context.timeStep === 0) {
-            // Use voltage source for DC
+        // === C1 (series) companion: G = C/dt ===
+        if (this.useTrapezoidal) {
+            this.c1Conductance = 2 * this.seriesCapacitance / context.timeStep;
         } else {
-            this.useTrapezoidal = context.integrationMethod !== 'backwardEuler';
-            this.compResistance = this.useTrapezoidal
-                ? 2 * this.inductance / context.timeStep
-                : this.inductance / context.timeStep;
-            context.stampResistor(this.nodes[2], this.nodes[3], this.compResistance);
-            context.markRightSideChanging(this.nodes[2]);
-            context.markRightSideChanging(this.nodes[3]);
+            this.c1Conductance = this.seriesCapacitance / context.timeStep;
         }
+        context.stampConductance(this.nodes[0], this.nodes[2], this.c1Conductance);
+        context.markRightSideChanging(this.nodes[0]);
+        context.markRightSideChanging(this.nodes[2]);
 
-        // Series resistor R between nodes[3] and nodes[1]
+        // === L companion: R = 2*L/dt (trapezoidal) or L/dt (backward euler) ===
+        this.lResistance = this.useTrapezoidal
+            ? 2 * this.inductance / context.timeStep
+            : this.inductance / context.timeStep;
+        context.stampResistor(this.nodes[2], this.nodes[3], this.lResistance);
+        context.markRightSideChanging(this.nodes[2]);
+        context.markRightSideChanging(this.nodes[3]);
+
+        // === R (series) ===
         context.stampResistor(this.nodes[3], this.nodes[1], this.seriesResistance);
     }
 
     override startIteration(): void {
-        // Inductor companion current source
-        if (this.compResistance > 0) {
+        // C0 companion current source (matches Java CapacitorElm trapezoidal)
+        if (this.c0Conductance > 0) {
+            const vd = this.volts[0] - this.volts[1];
+            if (this.useTrapezoidal) {
+                this.c0CurSource = -vd * this.c0Conductance - this.c0Current;
+            } else {
+                this.c0CurSource = -vd * this.c0Conductance;
+            }
+        }
+
+        // C1 companion current source
+        if (this.c1Conductance > 0) {
+            const vd = this.volts[0] - this.volts[2];
+            if (this.useTrapezoidal) {
+                this.c1CurSource = -vd * this.c1Conductance - this.c1Current;
+            } else {
+                this.c1CurSource = -vd * this.c1Conductance;
+            }
+        }
+
+        // L companion current source
+        if (this.lResistance > 0) {
             const vd = this.volts[2] - this.volts[3];
             if (this.useTrapezoidal) {
-                this.curSourceValue = vd / this.compResistance + this.current;
+                this.lCurSource = vd / this.lResistance + this.lCurrent;
             } else {
-                this.curSourceValue = this.current;
+                this.lCurSource = this.lCurrent;
             }
         }
     }
 
     override doStep(context: StampContext): void {
-        // Inductor current source
-        if (this.compResistance > 0) {
-            context.stampCurrentSource(this.nodes[2], this.nodes[3], this.curSourceValue);
+        // C0 current source
+        if (this.c0Conductance > 0) {
+            context.stampCurrentSource(this.nodes[0], this.nodes[1], this.c0CurSource);
         }
 
-        // Parallel capacitor C0 companion current source
-        if (context.timeStep > 0) {
-            const c0Val = this.parallelCapacitance / context.timeStep;
-            context.stampCurrentSource(this.nodes[0], this.nodes[1], -c0Val * this.volts[0] - this.volts[1]);
+        // C1 current source
+        if (this.c1Conductance > 0) {
+            context.stampCurrentSource(this.nodes[0], this.nodes[2], this.c1CurSource);
+        }
 
-            // Series capacitor C1 companion current source
-            const c1Val = this.seriesCapacitance / context.timeStep;
-            context.stampCurrentSource(this.nodes[0], this.nodes[2], -c1Val * (this.volts[0] - this.volts[2]));
+        // L current source
+        if (this.lResistance > 0) {
+            context.stampCurrentSource(this.nodes[2], this.nodes[3], this.lCurSource);
         }
     }
 
     override calculateCurrent(): void {
-        // Current through the series branch
-        const vd = this.volts[2] - this.volts[3];
-        if (this.compResistance > 0) {
-            this.current = vd / this.compResistance + this.curSourceValue;
+        // C0 current
+        if (this.c0Conductance > 0) {
+            const vd = this.volts[0] - this.volts[1];
+            this.c0Current = vd * this.c0Conductance + this.c0CurSource;
         }
+
+        // C1 current
+        if (this.c1Conductance > 0) {
+            const vd = this.volts[0] - this.volts[2];
+            this.c1Current = vd * this.c1Conductance + this.c1CurSource;
+        }
+
+        // L current (also the series branch current = total device current)
+        if (this.lResistance > 0) {
+            const vd = this.volts[2] - this.volts[3];
+            this.lCurrent = vd / this.lResistance + this.lCurSource;
+        }
+        this.current = this.lCurrent;
     }
 
     override getEditInfo(n: number): EditInfo | null {
@@ -150,7 +204,6 @@ export class CrystalComponent extends CircuitComponent {
     }
 
     override getInfo(): string[] {
-        // Calculate series resonant frequency
         const f0 = 1 / (2 * Math.PI * Math.sqrt(this.inductance * this.seriesCapacitance));
         const f0MHz = f0 / 1e6;
         return [

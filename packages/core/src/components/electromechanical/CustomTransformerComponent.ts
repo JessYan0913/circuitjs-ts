@@ -96,37 +96,38 @@ export class CustomTransformerComponent extends CircuitComponent {
     }
 
     private parseDescription(desc: string): void {
-        // Handle escaped format
+        // Handle escaped format (Java CustomLogicModel.escape/unescape)
         if (desc.includes('~') || desc.includes('`')) {
             desc = desc.replace(/~/g, '+').replace(/`/g, ',');
         }
 
-        // Parse tokens separated by commas, with colon marking secondary
-        const parts = desc.split(',');
-        const turns: number[] = [];
+        // Collect raw tokens with connection markers
+        // First split by ',' to get segments (separate physical windings)
+        const segments = desc.split(',');
+        const allTokens: { ratio: number; connected: boolean }[] = [];
         this.needDots = true;
 
-        for (const part of parts) {
-            if (part.includes(':')) {
-                const subParts = part.split(':');
-                // Left side of colon are primary coils but we treat all equally
-                // Just add turns ratios
-                for (const sp of subParts) {
-                    if (sp.length > 0) {
-                        const t = parseFloat(sp.replace(/[^0-9.\-]/g, ''));
-                        if (!isNaN(t)) turns.push(t);
-                    }
+        for (const segment of segments) {
+            // Split each segment by ':' (primary:secondary boundary)
+            const halves = segment.split(':');
+            for (const half of halves) {
+                // Split by '+' to find connected coils (share a node)
+                const plusParts = half.split('+');
+                for (let i = 0; i < plusParts.length; i++) {
+                    const part = plusParts[i].trim();
+                    if (part.length === 0) continue;
+                    const ratio = parseFloat(part);
+                    if (isNaN(ratio)) continue;
+                    // '+' means this coil is connected to previous (share node)
+                    allTokens.push({ ratio, connected: (i > 0) });
                 }
-            } else if (part.length > 0) {
-                const t = parseFloat(part.replace(/[^0-9.\-]/g, ''));
-                if (!isNaN(t)) turns.push(t);
             }
         }
 
-        this.coilCount = turns.length;
+        this.coilCount = allTokens.length;
         if (this.coilCount === 0) {
             this.coilCount = 2;
-            turns.push(1, 1);
+            // Default: 2 coils, ratio 1 each
         }
 
         // Allocate
@@ -136,29 +137,32 @@ export class CustomTransformerComponent extends CircuitComponent {
         this.coilCurCounts = new Array(this.coilCount);
         this.coilCurSourceValues = new Array(this.coilCount);
         this._voltdiff = new Array(this.coilCount);
+        this.nodeCurrents = [];
 
-        // Compute coil inductances and polarities
-        let maxTurns = 0;
-        for (let i = 0; i < this.coilCount; i++) {
-            const t = Math.abs(turns[i]);
-            if (t > maxTurns) maxTurns = t;
-        }
-
+        // Build node assignment: each coil gets 2 nodes
+        // '+' connected coils share a node (the end of previous = start of current)
         this.nodeCount = 0;
         this.coilNodes = [];
         for (let i = 0; i < this.coilCount; i++) {
-            const t = turns[i];
+            const token = allTokens.length > 0 ? allTokens[i] : { ratio: 1, connected: false };
+            const t = token.ratio;
             this.coilPolarities[i] = t >= 0 ? 1 : -1;
             const absT = Math.abs(t);
-            // Inductance proportional to turns squared
+            // Inductance proportional to turns squared (matches Java)
             this.coilInductances[i] = absT * absT * this.inductance;
 
-            // Each coil gets 2 nodes (start, end)
-            // Check if this coil is connected to previous (+ in description)
-            // For simplicity, each coil gets its own pair of nodes
-            this.coilNodes.push(this.nodeCount);
-            this.coilNodes.push(this.nodeCount + 1);
-            this.nodeCount += 2;
+            // If connected to previous coil (via +), share the previous coil's end node
+            if (token.connected && i > 0) {
+                // Share node: start = previous coil's end node
+                this.coilNodes.push(this.coilNodes[this.coilNodes.length - 1]);
+                this.coilNodes.push(this.nodeCount);
+                this.nodeCount++;
+            } else {
+                this.coilNodes.push(this.nodeCount);
+                this.coilNodes.push(this.nodeCount + 1);
+                this.nodeCount += 2;
+            }
+
             this.coilCurrents[i] = 0;
             this.coilCurCounts[i] = 0;
         }

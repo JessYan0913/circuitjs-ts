@@ -44,6 +44,7 @@ export class DCMotorComponent extends CircuitComponent {
 
     private voltSourceBEMF = -1;
     private voltSourceInertia = -1;
+    private timeStep = 0;
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
@@ -86,10 +87,12 @@ export class DCMotorComponent extends CircuitComponent {
     }
 
     override stamp(context: StampContext): void {
+        this.timeStep = context.timeStep;
+
         // === Electrical Domain ===
         // Armature: inductor (nodes[0]→nodes[2]), resistor (nodes[2]→nodes[3]), BEMF source (nodes[3]→nodes[1])
         if (context.timeStep === 0) {
-            context.stampVoltageSource(this.nodes[0], this.nodes[2], this.voltSource, 0);
+            // At DC, inductor is open circuit (infinite R = no stamp needed)
         } else {
             this.useTrapezoidal = context.integrationMethod !== 'backwardEuler';
             this.armResistance = this.useTrapezoidal
@@ -105,7 +108,7 @@ export class DCMotorComponent extends CircuitComponent {
         // === Mechanical Domain ===
         // Inertia: inductor (nodes[4]→nodes[5]), friction resistor (nodes[5]→ground), torque source (nodes[4]→ground)
         if (context.timeStep === 0) {
-            context.stampVoltageSource(this.nodes[4], this.nodes[5], this.voltSourceInertia + 1, 0);
+            // At DC, inertia inductor is open circuit
         } else {
             this.inertiaResistance = this.useTrapezoidal
                 ? 2 * this.j / context.timeStep
@@ -140,7 +143,7 @@ export class DCMotorComponent extends CircuitComponent {
         }
 
         // Update angle
-        this.angle += this.speed * this.simTime;
+        this.angle += this.speed * this.timeStep;
     }
 
     override doStep(context: StampContext): void {

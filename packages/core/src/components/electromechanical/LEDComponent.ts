@@ -3,8 +3,8 @@ import type { StampContext, EditInfo, Graphics } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { DiodeModel } from '../active/DiodeModel.js';
 import {
-    setVoltageColor, drawThickLinePt, drawThickLineXY,
-    interpPoint, interpPointPerpOut, drawPost, drawCenteredText,
+    setVoltageColor, drawThickLinePt,
+    drawPost, drawDots,
 } from '../drawutils.js';
 
 /** LED component — extends diode with forward drop ~2.1V and RGB color control */
@@ -48,12 +48,11 @@ export class LEDComponent extends CircuitComponent {
         return super.dump() + ` ${this.fwdrop} ${this.colorR} ${this.colorG} ${this.colorB} ${this.maxBrightnessCurrent}`;
     }
 
-    /** Compute saturationCurrent from fwdrop at ~1mA */
+    /** Compute saturationCurrent from fwdrop at ~1mA (matches Java DiodeModel.getModelWithParameters) */
     private setupFwdrop(): void {
         if (this.fwdrop > 0) {
             const vt = 0.025865;
             const vscale = this.model.emissionCoefficient * vt;
-            // I = Is * (exp(Vf/vscale) - 1) => Is = I / (exp(Vf/vscale) - 1)
             this.model.saturationCurrent = 0.001 / (Math.exp(this.fwdrop / vscale) - 1);
         }
     }
@@ -103,66 +102,49 @@ export class LEDComponent extends CircuitComponent {
         return arr;
     }
 
-    // No shortcut to avoid conflict with Inductor (also 'l')
-
     override draw(g: Graphics): void {
-        const hs = 12;
+        const cr = 12;
         const v1 = this.volts[0];
         const v2 = this.volts[1];
         this.calcLeads(24);
+
+        // Compute center of the LED
+        const ledCenter = {
+            x: (this.lead1.x + this.lead2.x) / 2,
+            y: (this.lead1.y + this.lead2.y) / 2,
+        };
 
         setVoltageColor(g, v1, this);
         drawThickLinePt(g, this.point1, this.lead1);
         setVoltageColor(g, v2, this);
         drawThickLinePt(g, this.lead2, this.point2);
 
-        // Triangle (arrow) - filled
-        const triBase = interpPoint(this.lead1, this.lead2, 0.2);
-        const triTip = interpPoint(this.lead1, this.lead2, 0.55);
-        const p1 = { x: 0, y: 0 };
-        const p2 = { x: 0, y: 0 };
-        interpPointPerpOut(this.lead1, this.lead2, p1, 0.2, hs);
-        interpPointPerpOut(this.lead1, this.lead2, p2, 0.2, -hs);
-
-        // LED color fill - brightness proportional to current
-        const brightness = Math.min(1, Math.abs(this.current) / this.maxBrightnessCurrent);
-        const r = Math.round(this.colorR * 255 * brightness);
-        const g_ = Math.round(this.colorG * 255 * brightness);
-        const b = Math.round(this.colorB * 255 * brightness);
-        const ledColor = `rgb(${r},${g_},${b})`;
-
-        g.setColor(ledColor);
-        g.fillPolygon(
-            [triBase.x, triTip.x, triBase.x],
-            [p1.y, triTip.y, p2.y],
-            3,
-        );
-
-        // Triangle outline
-        // Triangle outline
+        // LED body: circle with RGB fill proportional to current/brightness (matches Java)
         g.setColor('#808080');
         g.setLineWidth(2);
-        g.drawPolyline(
-            [triBase.x, triTip.x, triBase.x],
-            [p1.y, triTip.y, p2.y],
-            3,
-        );
+        g.drawOval(ledCenter.x - cr, ledCenter.y - cr, cr * 2, cr * 2);
 
-        // Cathode bar
-        const bar = interpPoint(this.lead1, this.lead2, 0.7);
-        setVoltageColor(g, v2, this);
-        drawThickLineXY(g, bar.x, bar.y + hs, bar.x, bar.y - hs);
+        // Brightness: use log scale (matches Java: w = 255*(1+.2*log(w)), clamped [0,255])
+        let w = Math.abs(this.current) / this.maxBrightnessCurrent;
+        if (w > 0) {
+            w = 255 * (1 + 0.2 * Math.log(w));
+        }
+        if (w > 255) w = 255;
+        if (w < 0) w = 0;
 
-        // Light rays
-        const rayY = bar.y + hs + 6;
-        const rayX = bar.x;
-        g.setColor('#FFFF00');
-        g.setLineWidth(1);
-        g.drawLine(rayX - 4, rayY, rayX - 8, rayY + 4);
-        g.drawLine(rayX, rayY, rayX, rayY + 6);
-        g.drawLine(rayX + 4, rayY, rayX + 8, rayY + 4);
+        const r = Math.round(this.colorR * w);
+        const g_ = Math.round(this.colorG * w);
+        const b = Math.round(this.colorB * w);
+        g.setColor(`rgb(${r},${g_},${b})`);
+        g.fillOval(ledCenter.x - cr + 2, ledCenter.y - cr + 2, (cr - 2) * 2, (cr - 2) * 2);
 
-        g.setLineWidth(1);
+        this.setBboxPts(this.point1, this.point2, cr);
+
+        // Current dots
+        this.updateCurcount(0);
+        drawDots(g, this.point1, this.lead1, this.curcount);
+        drawDots(g, this.point2, this.lead2, -this.curcount);
+
         drawPost(g, this.point1);
         drawPost(g, this.point2);
     }

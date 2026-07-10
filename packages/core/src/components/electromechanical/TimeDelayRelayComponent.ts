@@ -56,41 +56,44 @@ export class TimeDelayRelayComponent extends ChipComponent {
     }
 
     override stamp(context: StampContext): void {
-        // Vin input resistor
+        // Vin input resistor (linear, stamped once)
         context.stampResistor(this.nodes[0], this.nodes[1], this.vinResistance);
-
-        // Switch pins are nonlinear
+        // Switch pins are nonlinear — stamped each iteration via doStep
         context.stampNonLinear(this.nodes[2]);
         context.stampNonLinear(this.nodes[3]);
-
-        // Stamp the switch resistance
-        this.resistance = this.onState ? this.onResistance : this.offResistance;
-        context.stampResistor(this.nodes[2], this.nodes[3], this.resistance);
     }
 
     override nonLinear(): boolean { return true; }
 
     override doStep(context: StampContext): void {
+        // Stamp switch resistor each NR iteration (matches Java TimeDelayRelayElm)
         this.resistance = this.onState ? this.onResistance : this.offResistance;
         context.stampResistor(this.nodes[2], this.nodes[3], this.resistance);
     }
 
     override execute(): void {
-        // Read control voltage
+        // Read control voltage (matches Java TimeDelayRelayElm)
         const vin = this.volts[0] - this.volts[1];
-        const newPoweredState = vin > 2.5;
+        this.poweredState = vin > 2.5;
+    }
 
-        // Detect transition
-        if (newPoweredState !== this.poweredState) {
-            this.lastTransition = this.simTime;
-            this.poweredState = newPoweredState;
-        }
-
-        // Apply delay
+    override stepFinished(): void {
+        // Time management: only advance state once per converged timestep (matches Java)
         const delay = this.poweredState ? this.onDelay : this.offDelay;
         if (this.simTime > this.lastTransition + delay) {
-            this.onState = this.poweredState;
+            if (this.onState !== this.poweredState) {
+                this.onState = this.poweredState;
+                this.lastTransition = this.simTime;
+            }
         }
+    }
+
+    override reset(): void {
+        super.reset();
+        this.lastTransition = 0;
+        this.poweredState = false;
+        this.onState = false;
+        this.resistance = this.offResistance;
     }
 
     override getVoltageSourceCount(): number { return 0; }
