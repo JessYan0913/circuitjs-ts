@@ -12,9 +12,11 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@circuitjs/shared": "*"
+        "@circuitjs/shared": "*",
+        "lz-string": "^1.5.0"
     },
     "devDependencies": {
-        "vite-tsconfig-paths": "^6.1.1"
+        "vite-tsconfig-paths": "^6.1.1",
+        "@types/lz-string": "^1.5.0"
     }
 }

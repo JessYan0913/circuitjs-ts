@@ -1,13 +1,11 @@
 import { GraphicElm } from '../base/GraphicElm.js';
 import type { Graphics, EditInfo } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
+import { escape as escapeText, unescape as unescapeText } from '../../util/textEscape.js';
 
 /**
  * TextElm — text annotation on the circuit canvas (non-electrical).
- * Implements compatible escape/unescape matching Java CustomLogicModel:
- *   \\ → \      \n → newline    \s → space    \p → +
- *   \q → =      \h → #          \a → &        \r → \r
- *   \0 → empty string
+ * Uses shared textEscape utility matching Java CustomLogicModel format.
  */
 export class TextElm extends GraphicElm {
     text = 'hello';
@@ -35,53 +33,14 @@ export class TextElm extends GraphicElm {
             this.text = this.text.replace(/%2[bB]/g, '+');
         } else {
             // New-style dump: first token after size is the encoded text
-            this.text = this.unescape(tokens[start + 1] || '');
+            this.text = unescapeText(tokens[start + 1] || '');
         }
         this.split();
     }
 
     override dump(): string {
         this.flags |= TextElm.FLAG_ESCAPE;
-        return `${super.dump()} ${this.size} ${this.escape(this.text)}`;
-    }
-
-    /** Java-compatible escape */
-    private escape(s: string): string {
-        if (s.length === 0) return '\\0';
-        return s
-            .replace(/\\/g, '\\\\')
-            .replace(/\n/g, '\\n')
-            .replace(/ /g, '\\s')
-            .replace(/\+/g, '\\p')
-            .replace(/=/g, '\\q')
-            .replace(/#/g, '\\h')
-            .replace(/&/g, '\\a')
-            .replace(/\r/g, '\\r');
-    }
-
-    /** Java-compatible unescape */
-    private unescape(s: string): string {
-        if (s === '\\0') return '';
-        let result = '';
-        for (let i = 0; i < s.length; i++) {
-            if (s.charAt(i) === '\\' && i + 1 < s.length) {
-                const c = s.charAt(i + 1);
-                switch (c) {
-                    case 'n': result += '\n'; i++; break;
-                    case 'r': result += '\r'; i++; break;
-                    case 's': result += ' '; i++; break;
-                    case 'p': result += '+'; i++; break;
-                    case 'q': result += '='; i++; break;
-                    case 'h': result += '#'; i++; break;
-                    case 'a': result += '&'; i++; break;
-                    case '\\': result += '\\'; i++; break;
-                    default: result += '\\'; break; // keep backslash if unknown escape
-                }
-            } else {
-                result += s.charAt(i);
-            }
-        }
-        return result;
+        return `${super.dump()} ${this.size} ${escapeText(this.text)}`;
     }
 
     split(): void {

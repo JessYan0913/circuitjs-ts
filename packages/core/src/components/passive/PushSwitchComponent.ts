@@ -1,7 +1,10 @@
 import { SwitchComponent } from './SwitchComponent.js';
-import { registerComponent } from '../registry.js';
 
-/** Push (momentary) switch — normally open, closes while pressed (dump type 'p') */
+/**
+ * Push (momentary) switch — normally open, closes while pressed.
+ * Inherits dump type 's' from SwitchComponent (matching Java PushSwitchElm behavior).
+ * Distinguishes from regular SwitchComponent by the `momentary=true` flag in dump data.
+ */
 export class PushSwitchComponent extends SwitchComponent {
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
@@ -10,9 +13,5 @@ export class PushSwitchComponent extends SwitchComponent {
         this.momentary = true;
     }
 
-    getDumpType(): number | string { return 'p'; }
-
     getShortcut(): number { return 0; }
 }
-
-registerComponent('p'.charCodeAt(0), 'PushSwitchElm', PushSwitchComponent);

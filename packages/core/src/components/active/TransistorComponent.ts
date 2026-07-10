@@ -2,6 +2,7 @@ import { CircuitComponent } from '../base/CircuitComponent.js';
 import type { StampContext, EditInfo, Graphics } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { interpPoint2 } from '../drawutils.js';
+import { TransistorModel } from './TransistorModel.js';
 
 const VT = 0.025865;
 
@@ -17,6 +18,8 @@ const VT = 0.025865;
 export class TransistorComponent extends CircuitComponent {
     pnp = 1; // 1 for NPN, -1 for PNP
     beta = 100;
+    /** Name of shared TransistorModel (empty for default inline model) */
+    modelName = '';
 
     private ic = 0;
     private ib = 0;
@@ -48,6 +51,15 @@ export class TransistorComponent extends CircuitComponent {
     nonLinear(): boolean { return true; }
     getVoltageSourceCount(): number { return 0; }
 
+    /** Emit model dump line when a named model is referenced */
+    override dumpModel(): string | null {
+        if (!this.modelName) return null;
+        const model = TransistorModel.getModelWithName(this.modelName);
+        if (!model || model.dumped) return null;
+        model.dumped = true;
+        return model.dump();
+    }
+
     /** Post 0 = base = point1, post 1 = collector, post 2 = emitter */
     getPost(n: number): { x: number; y: number } {
         if (n === 0) return this.point1;
@@ -57,9 +69,15 @@ export class TransistorComponent extends CircuitComponent {
     }
 
     handleDumpData(tokens: string[], start: number): void {
-        // Format: pnp vbc vbe beta modelName
-        if (tokens.length > start) this.pnp = parseInt(tokens[start]) || 1;
-        if (tokens.length > start + 3) this.beta = parseFloat(tokens[start + 3]) || 100;
+        // Format: pnp vbc vbe beta [modelName]
+        const pi = (s: string) => { const v = parseInt(s); return isNaN(v) ? 1 : v; };
+        const pf = (s: string) => { const v = parseFloat(s); return isNaN(v) ? 100 : v; };
+        if (tokens.length > start) this.pnp = pi(tokens[start]);
+        if (tokens.length > start + 3) this.beta = pf(tokens[start + 3]);
+        if (tokens.length > start + 4) {
+            this.modelName = tokens[start + 4];
+        }
+        // vbc/vbe are stored at start+1 / start+2 (used for initial condition restoration in Java)
     }
 
     isPNP(): boolean { return this.pnp === -1; }

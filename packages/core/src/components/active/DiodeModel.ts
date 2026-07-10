@@ -1,4 +1,5 @@
 import type { StampContext } from '@circuitjs/shared';
+import { escape } from '../../util/textEscape.js';
 
 const VT = 0.025865; // Thermal voltage at 300K (matches Java)
 
@@ -11,10 +12,72 @@ const VT = 0.025865; // Thermal voltage at 300K (matches Java)
  * bias region uses a second exponential to model Zener / avalanche breakdown.
  */
 export class DiodeModel {
+    /** Static registry of named diode models (keyed by name) */
+    static readonly modelMap = new Map<string, DiodeModel>();
+
     saturationCurrent = 1e-14; // Is (leakage)
     emissionCoefficient = 1.0; // N
     breakdownVoltage = 0;      // Zener breakdown voltage (0 = none)
     seriesResistance = 0;      // Series resistance
+    forwardCurrent = 0;        // Forward current at 1V (persisted in dump)
+    flags = 0;                 // Model flags (matches Java DiodeModel.flags)
+
+    /** Model name (empty for inline/default models) */
+    name = '';
+    /** Whether this model has been dumped in the current dumpCircuit pass */
+    dumped = false;
+    /** Whether this is a built-in model (not user-defined) */
+    builtIn = false;
+
+    /** Reset dumped flags for all models (called at start of dumpCircuit) */
+    static clearDumpedFlags(): void {
+        for (const model of DiodeModel.modelMap.values()) {
+            model.dumped = false;
+        }
+    }
+
+    /** Look up a model by name in the registry */
+    static getModelWithName(name: string): DiodeModel | undefined {
+        return DiodeModel.modelMap.get(name);
+    }
+
+    /** Get or create a model by name, using fallback as template */
+    static getModelWithNameOrCreate(name: string, fallback: DiodeModel): DiodeModel {
+        let model = DiodeModel.modelMap.get(name);
+        if (!model) {
+            model = fallback;
+            model.name = name;
+            model.dumped = false;
+            model.builtIn = false;
+            DiodeModel.modelMap.set(name, model);
+        }
+        return model;
+    }
+
+    /** Serialize this model as a "34" dump line (matching Java DiodeModel.dump) */
+    dump(): string {
+        return `34 ${escape(this.name)} ${this.flags} ${this.saturationCurrent} ${this.seriesResistance} ${this.emissionCoefficient} ${this.breakdownVoltage} ${this.forwardCurrent}`;
+    }
+
+    /** Parse a "34" model line and store in the registry */
+    static undumpModel(tokens: string[], startIndex: number): DiodeModel | null {
+        if (tokens.length < startIndex + 6) return null;
+        const name = tokens[startIndex]; // already unescaped by tokenizer
+        const model = new DiodeModel();
+        model.name = name;
+        model.dumped = true;
+        const pf = (s: string, def: number) => { const v = parseFloat(s); return isNaN(v) ? def : v; };
+        model.flags = isNaN(parseInt(tokens[startIndex + 1])) ? 0 : parseInt(tokens[startIndex + 1]);
+        model.saturationCurrent = pf(tokens[startIndex + 2], 1e-14);
+        model.seriesResistance = pf(tokens[startIndex + 3], 0);
+        model.emissionCoefficient = pf(tokens[startIndex + 4], 1.0);
+        model.breakdownVoltage = pf(tokens[startIndex + 5], 0);
+        if (tokens.length > startIndex + 6) {
+            model.forwardCurrent = pf(tokens[startIndex + 6], 0);
+        }
+        DiodeModel.modelMap.set(name, model);
+        return model;
+    }
 
     private lastVoltage = 0;
 

@@ -24,6 +24,15 @@
 - [x] 文本格式 dump 输出（`dumpCircuit()`）
 - [x] XML 格式支持（`<cir>` + 自闭合标签）
 - [x] 各元件 `handleDumpData()` 读取额外参数
+- [x] 模型行解析（`!` CustomLogicModel、`.` CustomCompositeModel、`34` DiodeModel、`32` TransistorModel）
+- [x] 模型行序列化输出（`dumpModel()` + `clearDumpedFlags()`）
+- [x] Scope 行（`o ...`）解析与输出
+- [x] Adjustable 滑块行（`38 ...`）解析与输出
+- [x] Hint 行（`h ...`）解析与输出
+- [x] URL 压缩格式（lz-string + hash fragment / `?ctz=` 参数）
+- [x] 完整 XML 标签映射（95+ 元件）
+- [x] 共享文本转义工具（`util/textEscape.ts`）
+- [x] 电容初值条件序列化（`voltdiff`）
 
 ---
 
@@ -56,19 +65,19 @@ o ...                          # scope 配置
 
 ### 待完善
 
-- [ ] **完整 type id 表** — 枚举所有 ~60 种元件的 dumpId
-- [ ] **Scope 行序列化**（`o ...` 行格式）
-- [ ] **Adjustable 滑块行**（`34 sliderIndex x y ...` 格式）
-- [ ] **标签/文本元件序列化**（多行文本转义）
-- [ ] **初始条件**: 电容 voltdiff、电感 current 正确读写
-- [ ] **自定义模型**: CustomLogicModel、CustomCompositeModel 序列化嵌入
+- [ ] **完整 type id 表** — 枚举所有 ~60 种元件的 dumpId（已实现，但文档需同步）
+- [ ] **Scope 行完整属性映射** — per-plot flags 解析优化
+- [ ] **Adjustable 滑块 UI 重建** — 从 `AdjustableData` 恢复滑块控件
+- [ ] **自定义模型引用** — 元件通过 `modelName` 引用已加载的模型（当前模型参数在元件内部内联）
+- [ ] **初始条件**: 电容 `voltdiff`、电感 `current` 在仿真启动时正确设置
 
 ---
 
 ## 9.2 URL 压缩格式
 
-- [ ] **lz-string 压缩/解压** — 文本→URL 安全 base64
-- [ ] URL 参数 `?ct=` 解压加载
+- [x] **lz-string 压缩/解压** — 文本→URL safe base64（`UrlSerializer.ts`）
+- [x] URL 参数 `?ctz=` 解压加载（兼容 `?cct=` 旧格式）
+- [x] URL hash 片段格式（`#<compressed>`）
 
 ---
 
@@ -76,7 +85,7 @@ o ...                          # scope 配置
 
 - [x] Falstad XML 格式基本解析
 - [x] 属性映射: `r`(电阻), `c`(电容), `l`(电感), `v`(电压源), 等
-- [ ] 完整的元件标签映射（目前仅支持 12 种元件）
+- [x] 完整的元件标签映射（95+ 种元件，含半导体/数字/机电/传感器）
 
 ---
 

@@ -2,6 +2,8 @@
  * CustomLogicModel — stores boolean expressions for CustomLogicComponent.
  * Each output has a rule: a boolean expression string + optional hold flag.
  */
+import { escape as esc, unescape as unesc } from '../../util/textEscape.js';
+
 export interface CustomLogicRule {
     expr: string;
     hold: boolean;
@@ -10,11 +12,27 @@ export interface CustomLogicRule {
 const modelCache = new Map<string, CustomLogicModel>();
 
 export class CustomLogicModel {
+    /** Static registry of named logic models */
+    static readonly modelMap = new Map<string, CustomLogicModel>();
+
     inputs: string[] = ['A', 'B'];
     outputs: string[] = ['Q'];
     rules: CustomLogicRule[] = [{ expr: 'A&B', hold: false }];
     chipWidth = 4;
     chipHeight = 3;
+
+    /** Model name (empty for inline/default models) */
+    name = '';
+    infoText = '';
+    /** Whether this model has been dumped in the current dumpCircuit pass */
+    dumped = false;
+
+    /** Reset dumped flags for all models */
+    static clearDumpedFlags(): void {
+        for (const model of CustomLogicModel.modelMap.values()) {
+            model.dumped = false;
+        }
+    }
 
     /** Unique key for model caching */
     get key(): string {
@@ -106,6 +124,61 @@ export class CustomLogicModel {
             modelCache.set(key, model);
         }
         return modelCache.get(key)!;
+    }
+
+    private static arrayToList(arr: string[]): string {
+        return arr.join(',');
+    }
+
+    /** Serialize this model as a "!" dump line (matching Java CustomLogicModel.dump) */
+    dump(): string {
+        this.dumped = true;
+        const rulesStr = this.rules.map((r, i) =>
+            `${esc(this.outputs[i] || `O${i}`)}=${esc(r.expr)}`
+        ).join('\n');
+        return `! ${esc(this.name)} 0 ${esc(CustomLogicModel.arrayToList(this.inputs))} ${esc(CustomLogicModel.arrayToList(this.outputs))} ${esc(this.infoText)} ${esc(rulesStr)}`;
+    }
+
+    /** Parse a "!" model line and store in the registry */
+    static undumpModel(tokens: string[], startIndex: number): CustomLogicModel | null {
+        if (tokens.length < startIndex + 5) return null;
+        const name = unesc(tokens[startIndex]);
+        const flags = parseInt(tokens[startIndex + 1]) || 0;
+        const inputsStr = unesc(tokens[startIndex + 2]);
+        const outputsStr = unesc(tokens[startIndex + 3]);
+        const infoText = unesc(tokens[startIndex + 4]);
+        // Remaining tokens form the rules string (after unescaping)
+        const rulesStr = tokens.slice(startIndex + 5).map(t => unesc(t)).join(' ');
+
+        const inputs = inputsStr ? inputsStr.split(',').filter(Boolean) : ['A', 'B'];
+        const outputs = outputsStr ? outputsStr.split(',').filter(Boolean) : ['Q'];
+
+        const rules: CustomLogicRule[] = [];
+        const ruleLines = rulesStr.split('\n').filter(Boolean);
+        for (const line of ruleLines) {
+            const eqIdx = line.indexOf('=');
+            if (eqIdx >= 0) {
+                const outName = line.substring(0, eqIdx).trim();
+                const expr = line.substring(eqIdx + 1).trim();
+                const outIdx = outputs.indexOf(outName);
+                const hold = outIdx >= 0 ? (flags & (1 << (16 + outIdx))) !== 0 : false;
+                rules.push({ expr, hold });
+            }
+        }
+
+        // Fallback: if no rules parsed, create dummy rules for each output
+        if (rules.length === 0) {
+            for (const _ of outputs) {
+                rules.push({ expr: '0', hold: false });
+            }
+        }
+
+        const model = CustomLogicModel.create(inputs, outputs, rules);
+        model.name = name;
+        model.infoText = infoText;
+        model.dumped = true;
+        CustomLogicModel.modelMap.set(name, model);
+        return model;
     }
 }
 

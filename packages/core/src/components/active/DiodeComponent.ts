@@ -14,6 +14,14 @@ export class DiodeComponent extends CircuitComponent {
     getDumpType(): number | string { return 'd'; }
     nonLinear(): boolean { return true; }
 
+    /** Emit model dump line when a named model is referenced */
+    override dumpModel(): string | null {
+        if (!this.model.name) return null;
+        if (this.model.dumped) return null;
+        this.model.dumped = true;
+        return this.model.dump();
+    }
+
     stamp(context: StampContext): void {
         context.stampNonLinear(this.nodes[0]);
         context.stampNonLinear(this.nodes[1]);

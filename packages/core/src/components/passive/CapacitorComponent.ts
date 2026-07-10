@@ -10,6 +10,10 @@ export class CapacitorComponent extends CircuitComponent {
     capacitance = 1e-6;
     compResistance = 0;
     curSourceValue = 0;
+    /** Initial voltage across capacitor (for serialization, matching Java) */
+    voltdiff = 0;
+    /** Initial condition voltage (defaults to 1e-3 in Java) */
+    initialVoltage = 1e-3;
     /** Matches Java FLAG_BACK_EULER: true when using trapezoidal integration */
     private useTrapezoidal = true;
 
@@ -21,9 +25,19 @@ export class CapacitorComponent extends CircuitComponent {
         if (tokens.length > startIndex) {
             this.capacitance = parseFloat(tokens[startIndex]);
         }
+        if (tokens.length > startIndex + 1) {
+            this.voltdiff = parseFloat(tokens[startIndex + 1]);
+        }
+        if (tokens.length > startIndex + 2) {
+            this.initialVoltage = parseFloat(tokens[startIndex + 2]);
+        }
     }
 
     getDumpType(): number | string { return 'c'; }
+
+    override dump(): string {
+        return super.dump() + ` ${this.capacitance} ${this.voltdiff} ${this.initialVoltage}`;
+    }
 
     stamp(context: StampContext): void {
         if (context.timeStep === 0) {
