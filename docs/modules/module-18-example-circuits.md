@@ -10,20 +10,20 @@
 
 | 原始 | 目标 | 状态 |
 |------|------|------|
-| `circuitjs1/public/circuits/` | `packages/circuits/` | ❌ 空 |
-| `setuplist.txt` | — | ❌ |
-| — | 示例浏览器 UI | ❌ |
+| `circuitjs1/public/circuits/` | `packages/circuits/` | ✅ 330 个文件已复制 |
+| `setuplist.txt` | `packages/circuits/setuplist.txt` | ✅ 已解析为分类索引 |
+| — | 示例浏览器 UI | ✅ 已实现（分类/搜索/点击加载） |
 
 ---
 
 ## 待实现
 
-- [ ] **复制所有示例电路 `.txt`** 到重构项目
-- [ ] **`setuplist.txt` 解析** — 分类/排序/子菜单生成
-- [ ] **示例浏览器 UI**:
-  - 分类展示
-  - 搜索功能
-  - 预览（电路名称 + 简短描述）
+- [x] **复制所有示例电路 `.txt`** 到重构项目（330 个文件）
+- [x] **`setuplist.txt` 解析** — 分类/排序/子菜单生成
+- [x] **示例浏览器 UI**:
+  - 分类展示（左侧分类树）
+  - 搜索功能（按名称/文件名搜索）
+  - 预览（电路名称 + 文件名）
   - 点击加载
 
 ---

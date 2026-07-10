@@ -15,7 +15,7 @@ import { SliderPanel } from './SliderPanel.js';
 import { ScopePanel } from './ScopePanel.js';
 import { ScopeConfigDialog } from './ScopeConfigDialog.js';
 import { Modal } from './Modal.js';
-import { EXAMPLES } from '../data/examples.js';
+import { ExampleBrowser } from './ExampleBrowser.js';
 import { createScopeConfig, createScopePlot } from '../canvas/scope-capture.js';
 import { useCircuitStore } from '../store/circuitStore.js';
 
@@ -35,7 +35,6 @@ export function App() {
     const [statusText, setStatusText] = useState('Ready');
     const [refreshKey, setRefreshKey] = useState(0);
     const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
-    const [selectedExample, setSelectedExample] = useState<string | null>(null);
 
     // The current "add component type" selected from the Draw menu
     const [addComponentType, setAddComponentType] = useState<string | null>(null);
@@ -300,12 +299,9 @@ export function App() {
     }, [dialog, setComponents]);
 
     // Handle loading examples
-    const handleLoadExample = useCallback((name: string) => {
-        const text = EXAMPLES[name];
-        if (text) {
-            loadCircuit(text, name);
-            setDialog({ type: 'none' });
-        }
+    const handleLoadExample = useCallback((text: string, name: string) => {
+        loadCircuit(text, name);
+        setDialog({ type: 'none' });
     }, [loadCircuit]);
 
     return (
@@ -431,27 +427,8 @@ export function App() {
             )}
 
             {dialog.type === 'examples' && (
-                <Modal title="Example Circuits" onClose={() => setDialog({ type: 'none' })} width={400}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {Object.keys(EXAMPLES).map((name) => (
-                            <div
-                                key={name}
-                                onClick={() => handleLoadExample(name)}
-                                style={{
-                                    padding: '8px 12px',
-                                    color: '#CCC',
-                                    fontFamily: 'monospace',
-                                    fontSize: '12px',
-                                    cursor: 'pointer',
-                                    borderRadius: '3px',
-                                }}
-                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#333'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                            >
-                                {name}
-                            </div>
-                        ))}
-                    </div>
+                <Modal title="Example Circuits" onClose={() => setDialog({ type: 'none' })} width={600}>
+                    <ExampleBrowser onLoadCircuit={handleLoadExample} onClose={() => setDialog({ type: 'none' })} />
                 </Modal>
             )}
         </div>
