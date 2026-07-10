@@ -38,6 +38,7 @@ export interface CircuitNodeLink {
 export enum RowType {
     ROW_NORMAL = 0,
     ROW_CONST = 1,
+    ROW_CURRENT = 2,
 }
 
 export interface RowInfo {
@@ -185,12 +186,22 @@ export interface Graphics {
     setColor(color: string | ColorObj): void;
     setLineWidth(w: number): void;
     drawLine(x1: number, y1: number, x2: number, y2: number): void;
+    /** Thick line (3px) — matches Java Graphics.drawThickLine */
+    drawThickLine(x1: number, y1: number, x2: number, y2: number): void;
+    /** Thick circle (3px) — matches Java Graphics.drawThickCircle */
+    drawThickCircle(cx: number, cy: number, r: number): void;
+    /** Draw inductor coil zigzag path */
+    drawCoil(x1: number, y1: number, x2: number, y2: number, segments: number, color: string | ColorObj): void;
     drawPolyline(xPoints: number[], yPoints: number[], n: number): void;
     drawPolygon(xPoints: number[], yPoints: number[], n: number): void;
     fillPolygon(xPoints: number[], yPoints: number[], n: number): void;
     /** x,y = top-left corner, w,h = bounding box (AWT convention) */
     drawOval(x: number, y: number, w: number, h: number): void;
     fillOval(x: number, y: number, w: number, h: number): void;
+    /** Stroked rectangle (Java Graphics.drawRect) */
+    drawRect(x: number, y: number, w: number, h: number): void;
+    drawRoundRect(x: number, y: number, w: number, h: number, arc: number): void;
+    fillRoundRect(x: number, y: number, w: number, h: number, arc: number): void;
     fillRect(x: number, y: number, w: number, h: number): void;
     drawString(s: string, x: number, y: number): void;
     setFontSize(px: number): void;
@@ -199,9 +210,33 @@ export interface Graphics {
     textAlign(align: 'left' | 'center' | 'right'): void;
     textBaseline(baseline: 'top' | 'middle' | 'bottom'): void;
     getColor(): string;
+    /** Set clipping rectangle (Java Graphics.clipRect) */
+    clipRect(x: number, y: number, w: number, h: number): void;
+    /** Set clipping rectangle (AWT convention: setClip(x, y, w, h)) */
+    setClip(x: number, y: number, w: number, h: number): void;
     save(): void;
     restore(): void;
     getContext(): CanvasRenderingContext2D;
+}
+
+// ---------- Polygon ----------
+
+/** Polygon data class — matches java.awt.Polygon shape */
+export interface Polygon {
+    npoints: number;
+    xpoints: number[];
+    ypoints: number[];
+    boundingBox?: Rect;
+}
+
+// ---------- Adjustable ----------
+
+/** Adjustable interface — for components with slider-bound parameters */
+export interface Adjustable {
+    /** Get the current slider value (0.0–1.0) */
+    getSliderValue(): number;
+    /** Set the slider value */
+    setSliderValue(val: number): void;
 }
 
 // ---------- Analysis ----------

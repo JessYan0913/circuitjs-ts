@@ -1,4 +1,5 @@
-import { COLOR_WHITE, COLOR_BLACK } from '@circuitjs/shared';
+import { COLOR_WHITE, COLOR_BLACK, COLOR_LIGHT_GRAY, COLOR_YELLOW } from '@circuitjs/shared';
+import type { ColorObj } from '@circuitjs/shared';
 
 export const COLORS = {
     background: '#000000',
@@ -40,6 +41,44 @@ export function getBackground(): string {
 
 export function getTextColor(): string {
     return useWhiteBackground ? COLORS.textWhite : COLORS.text;
+}
+
+// ---- Color selection utilities (matching Java Graphics helpers) ----
+
+export const lightGrayColor = COLOR_LIGHT_GRAY;
+export const selectedColor = COLOR_YELLOW;
+
+/**
+ * Select a color from an array based on a 0.0–1.0 value.
+ * Matches Java's Graphics.selectColor.
+ */
+export function selectColor(colors: string[], val: number): string {
+    if (colors.length === 0) return COLOR_WHITE;
+    const idx = Math.max(0, Math.min(colors.length - 1, Math.floor(val * colors.length)));
+    return colors[idx];
+}
+
+/**
+ * Determine whether a color needs a highlight (light) background for readability.
+ * Returns true for dark colors.
+ */
+export function needsHighlight(color: string | ColorObj): boolean {
+    let r = 0, g = 0, b = 0;
+    if (typeof color === 'string') {
+        const hex = color.replace('#', '');
+        if (hex.length >= 6) {
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        }
+    } else {
+        r = color.r;
+        g = color.g;
+        b = color.b;
+    }
+    // Perceived brightness (photopic)
+    const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+    return brightness < 128;
 }
 
 /** Voltage color scale — maps voltage to a color gradient */

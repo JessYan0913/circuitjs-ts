@@ -2,6 +2,12 @@ import type { ColorObj, Graphics } from '@circuitjs/shared';
 
 export class CanvasGraphics implements Graphics {
     private strokeColor = '#FFFFFF';
+    /** Last set color (Java Graphics.lastColor equivalent) */
+    lastColor: string | ColorObj | null = null;
+    /** Current font size (matches Java Graphics.currentFontSize) */
+    currentFontSize = 12;
+    /** Current font name (matches Java Graphics.currentFont) */
+    currentFont: string | null = null;
 
     constructor(public ctx: CanvasRenderingContext2D) {}
 
@@ -16,6 +22,7 @@ export class CanvasGraphics implements Graphics {
             this.ctx.strokeStyle = s;
             this.ctx.fillStyle = s;
         }
+        this.lastColor = color;
     }
 
     getColor(): string {
@@ -30,6 +37,52 @@ export class CanvasGraphics implements Graphics {
         this.ctx.beginPath();
         this.ctx.moveTo(Math.round(x1), Math.round(y1));
         this.ctx.lineTo(Math.round(x2), Math.round(y2));
+        this.ctx.stroke();
+    }
+
+    drawThickLine(x1: number, y1: number, x2: number, y2: number): void {
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.moveTo(Math.round(x1), Math.round(y1));
+        this.ctx.lineTo(Math.round(x2), Math.round(y2));
+        this.ctx.stroke();
+        this.ctx.lineWidth = 1;
+    }
+
+    drawThickCircle(cx: number, cy: number, r: number): void {
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r * 0.98, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.lineWidth = 1;
+    }
+
+    drawCoil(x1: number, y1: number, x2: number, y2: number, segments: number, _color: string | ColorObj): void {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 1) return;
+        const segLen = len / segments;
+        const nx = dx / len;
+        const ny = dy / len;
+        const coilRadius = segLen * 0.45;
+
+        this.ctx.beginPath();
+        this.ctx.moveTo(Math.round(x1), Math.round(y1));
+        for (let i = 0; i < segments; i++) {
+            const ex = x1 + (i + 1) * segLen * nx;
+            const ey = y1 + (i + 1) * segLen * ny;
+            const direction = i % 2 === 0 ? 1 : -1;
+            const p1x = x1 + (i + 0.25) * segLen * nx + direction * coilRadius * ny;
+            const p1y = y1 + (i + 0.25) * segLen * ny - direction * coilRadius * nx;
+            const p2x = x1 + (i + 0.75) * segLen * nx + direction * coilRadius * ny;
+            const p2y = y1 + (i + 0.75) * segLen * ny - direction * coilRadius * nx;
+            this.ctx.bezierCurveTo(
+                Math.round(p1x), Math.round(p1y),
+                Math.round(p2x), Math.round(p2y),
+                Math.round(ex), Math.round(ey),
+            );
+        }
         this.ctx.stroke();
     }
 
@@ -79,6 +132,25 @@ export class CanvasGraphics implements Graphics {
         this.ctx.fill();
     }
 
+    /** Stroked rectangle — matches Java Graphics.drawRect */
+    drawRect(x: number, y: number, w: number, h: number): void {
+        this.ctx.strokeRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    }
+
+    drawRoundRect(x: number, y: number, w: number, h: number, arc: number): void {
+        const r = Math.min(arc, Math.min(w, h) / 2);
+        this.ctx.beginPath();
+        this.ctx.roundRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h), r);
+        this.ctx.stroke();
+    }
+
+    fillRoundRect(x: number, y: number, w: number, h: number, arc: number): void {
+        const r = Math.min(arc, Math.min(w, h) / 2);
+        this.ctx.beginPath();
+        this.ctx.roundRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h), r);
+        this.ctx.fill();
+    }
+
     fillRect(x: number, y: number, w: number, h: number): void {
         this.ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
     }
@@ -88,11 +160,14 @@ export class CanvasGraphics implements Graphics {
     }
 
     setFontSize(px: number): void {
-        this.ctx.font = `${Math.round(px)}px sans-serif`;
+        this.currentFontSize = Math.round(px);
+        this.ctx.font = `${this.currentFontSize}px sans-serif`;
     }
 
     /** Set font using Java Font convention ("SansSerif" → "sans-serif") */
     setFont(font: string, size: number): void {
+        this.currentFontSize = size;
+        this.currentFont = font;
         this.ctx.font = `${size}px sans-serif`;
     }
 
@@ -109,6 +184,13 @@ export class CanvasGraphics implements Graphics {
         this.ctx.textBaseline = baseline;
     }
 
+    /** Clip rectangle — matches Java Graphics.clipRect */
+    clipRect(x: number, y: number, w: number, h: number): void {
+        this.ctx.beginPath();
+        this.ctx.rect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+        this.ctx.clip();
+    }
+
     /** Save canvas state */
     save(): void {
         this.ctx.save();
@@ -117,6 +199,11 @@ export class CanvasGraphics implements Graphics {
     /** Restore canvas state */
     restore(): void {
         this.ctx.restore();
+    }
+
+    /** Set clipping rectangle (AWT convention: setClip(x, y, w, h)) */
+    setClip(x: number, y: number, w: number, h: number): void {
+        this.clipRect(x, y, w, h);
     }
 
     /** Get raw canvas context for advanced operations */

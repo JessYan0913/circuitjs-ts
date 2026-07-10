@@ -8,6 +8,9 @@ export { StampContextImpl } from './circuit/StampContextImpl.js';
 export type { StampContextImpl as StampContext } from './circuit/StampContextImpl.js';
 
 export * from './components/base/CircuitComponent.js';
+export * from './components/base/GraphicElm.js';
+export * from './components/base/Polygon.js';
+export * from './components/base/Point.js';
 export * from './components/registry.js';
 
 export * from './demo.js';
