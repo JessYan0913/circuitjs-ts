@@ -22,30 +22,30 @@ circuitjs1 `app/main.js` 中已有 MCP-over-SSE 实验性实现，提供:
 
 | 文件 | 状态 |
 |------|------|
-| `packages/mcp-server/src/index.ts` | ❌ 仅占位符 |
-| `packages/mcp-server/` | ❌ 空目录 |
+| `packages/mcp-server/src/index.ts` | ✅ 完整实现 |
+| `packages/mcp-server/` | ✅ 功能完备 |
 
 ---
 
-## 待实现
+## 已实现
 
-- [ ] **StdioTransport**（基于 `@modelcontextprotocol/sdk`）
+- [x] **StdioTransport**（基于 `@modelcontextprotocol/sdk` 的 `McpServer`）
 
 ### 工具定义
 
-- [ ] `load_circuit` — 从文本加载电路
-- [ ] `export_circuit` — 导出电路文本
-- [ ] `start_simulation` — 启动仿真
-- [ ] `stop_simulation` — 停止仿真
-- [ ] `get_voltage` — 查询节点电压
-- [ ] `step_simulation` — 单步仿真
-- [ ] `take_screenshot` — 截图输出
-- [ ] `list_components` — 列出所有元件
-- [ ] `get_node_list` — 获取所有节点
+- [x] `load_circuit` — 从文本加载电路（支持旧文本格式和 XML 格式）
+- [x] `export_circuit` — 导出电路文本
+- [x] `start_simulation` — 启动仿真
+- [x] `stop_simulation` — 停止仿真
+- [x] `get_voltage` — 查询节点电压
+- [x] `step_simulation` — 单步仿真（支持 steps 或 duration 参数）
+- [ ] `take_screenshot` — 截图输出（需要 Graphics/Canvas 环境，MCP 纯 CLI 环境中不可用）
+- [x] `list_components` — 列出所有元件及其状态（位置、电压差、电流、功率）
+- [x] `get_node_list` — 获取所有节点电压
 
 ### 集成
 
-- [ ] 与 `@circuitjs/core` 的 SimulationManager 集成
+- [x] 与 `@circuitjs/core` 的 SimulationManager 和 Serializer 集成
 
 ---
 
