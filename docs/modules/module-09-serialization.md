@@ -2,6 +2,7 @@
 
 > **目标**: 完整实现电路序列化/反序列化，支持 Falstad 文本格式、URL 压缩格式和 XML 格式。
 > **优先级**: P0 — 核心仿真正确性
+> **原始 Java 源码位置**: `E:\circuitjs1\src\com\lushprojects\circuitjs1\client\`
 
 ---
 
@@ -9,8 +10,8 @@
 
 | Java | TS | 状态 |
 |------|-----|------|
-| `CirSim.java` (dump/load 部分) | `packages/core/circuit/Serializer.ts` | ✅ 基础 |
-| `StringTokenizer.java` | (内联在 Serializer.ts) | ✅ |
+| `CirSim.java` (dump/load 部分) | `packages/core/circuit/Serializer.ts` | ✅ 已实现 |
+| `StringTokenizer.java` | (内联在 Serializer.ts) | ✅ 已实现 |
 | `LoadFile.java` | — | ❌ |
 | `QueryParameters.java` | — | ❌ |
 
@@ -19,9 +20,10 @@
 ## 当前状态
 
 - [x] 文本格式 `$ 1 ...` 头部解析
-- [x] 部分元件 type 的反序列化
-- [x] 文本格式 dump 输出
-- [x] 基本 XML 格式支持
+- [x] 各已实现元件的 dumpType 反序列化
+- [x] 文本格式 dump 输出（`dumpCircuit()`）
+- [x] XML 格式支持（`<cir>` + 自闭合标签）
+- [x] 各元件 `handleDumpData()` 读取额外参数
 
 ---
 
@@ -29,15 +31,34 @@
 
 电路格式:
 ```
-$ 1 timestep maxVoltage flags
+$ 1 maxTimeStep iterCount currentBar voltageRange powerBar minTimeStep
 t id x1 y1 x2 y2 flags ...  # 每个元件一行
 o ...                          # scope 配置
 34 ...                         # Adjustable 滑块
 ```
 
+### 当前已支持序列化的元件（dump type → 组件）:
+
+| dumpType | 组件 | 状态 |
+|----------|------|------|
+| `r` | ResistorComponent | ✅ |
+| `c` | CapacitorComponent | ✅ |
+| `l` | InductorComponent | ✅ |
+| `w` | WireComponent | ✅ |
+| `s` | SwitchComponent | ✅ |
+| `v` | VoltageComponent | ✅ |
+| `g` | GroundComponent | ✅ |
+| `R` | RailComponent (+ ACRail/SquareRail/Clock) | ✅ |
+| `i` | CurrentComponent | ✅ |
+| `d` | DiodeComponent | ✅ |
+| `t` | TransistorComponent | ✅ |
+| `O` | OutputComponent | ✅ |
+
+### 待完善
+
 - [ ] **完整 type id 表** — 枚举所有 ~60 种元件的 dumpId
 - [ ] **Scope 行序列化**（`o ...` 行格式）
-- [ ] **Adjustable 滑块行**（`% sliderIndex x y ...` 格式）
+- [ ] **Adjustable 滑块行**（`34 sliderIndex x y ...` 格式）
 - [ ] **标签/文本元件序列化**（多行文本转义）
 - [ ] **初始条件**: 电容 voltdiff、电感 current 正确读写
 - [ ] **自定义模型**: CustomLogicModel、CustomCompositeModel 序列化嵌入
@@ -53,55 +74,77 @@ o ...                          # scope 配置
 
 ## 9.3 XML 格式
 
-- [ ] Falstad XML 格式电路文件解析支持
+- [x] Falstad XML 格式基本解析
+- [x] 属性映射: `r`(电阻), `c`(电容), `l`(电感), `v`(电压源), 等
+- [ ] 完整的元件标签映射（目前仅支持 12 种元件）
 
 ---
 
 ## 9.4 完整 DumpId 对照表
 
-| dumpId | 元件 | dumpId | 元件 | dumpId | 元件 |
-|--------|------|--------|------|--------|------|
-| `r` | Resistor | `c` | Capacitor | `C` | PolarCapacitor |
-| `l` | Inductor | `w` | Wire | `s` | Switch |
-| `S` | Switch2 | `p` | PushSwitch | `f` | Fuse |
-| `b` | Box | `g` | Ground | `V` | Rail |
-| `vr` | VarRail | `v` | Voltage | `i` | Current |
-| `clk` | Clock | `sqr` | SquareRail | `d` | Diode |
-| `z` | Zener | `vc` | Varactor | `td` | TunnelDiode |
-| `t` | NPN Transistor | `T` | PNP Transistor | `dar` | Darlington |
-| `ndar` | NDarlington | `pdar` | PDarlington | `f` | NMOS |
-| `p` | PMOS | `njf` | NJFET | `pjf` | PJFET |
-| `op` | OpAmp | `opr` | OpAmpReal | `ops` | OpAmpSwap |
-| `ota` | OTA | `cc2` | CC2 | `cccs` | CCCS |
-| `ccvs` | CCVS | `vccs` | VCCS | `vcvs` | VCVS |
-| `scr` | SCR | `diac` | Diac | `triac` | Triac |
-| `triode` | Triode | `opt` | Optocoupler | `AND` | AndGate |
-| `ND` | NandGate | `OR` | OrGate | `NR` | NorGate |
-| `XOR` | XorGate | `NOT` | Inverter | `li` | LogicInput |
-| `lo` | LogicOutput | `D` | DFlipFlop | `JK` | JKFlipFlop |
-| `T` | TFlipFlop | `latch` | Latch | `schmitt` | Schmitt |
-| `invschmitt` | InvertingSchmitt | `ts` | TriState | `comp` | Comparator |
-| `as` | AnalogSwitch | `asw` | AnalogSwitch2 | `MB` | MBBSwitch |
-| `tform` | Transformer | `tform2` | TappedTransformer | `ctrans` | CustomTransformer |
-| `tline` | TransLine | `xtal` | Crystal | `relay` | Relay |
-| `tdrelay` | TimeDelayRelay | `dcm` | DCMotor | `lamp` | Lamp |
-| `led` | LED | `ledarray` | LEDArray | `spark` | SparkGap |
-| `probe` | Probe | `a` | Ammeter | `ohm` | OhmMeter |
-| `o` | Output | `tp` | TestPoint | `scope` | ScopeElm |
-| `pc` | PhaseComp | `rec` | DataRecorder | `st` | StopTrigger |
-| `text` | TextElm | `label` | LabeledNode | `audio` | AudioOutput |
-| `aIn` | AudioInput | `pot` | PotElm | `therm` | Thermistor |
-| `ldr` | LDR | `mem` | Memristor | `am` | AMElm |
-| `fm` | FMElm | `noise` | Noise | `sweep` | SweepElm |
-| `ant` | Antenna | `vco` | VCO | `seq` | SeqGen |
-| `timer` | Timer | `cl` | CustomLogic | `ccomp` | CustomComposite |
-| `mux` | Multiplexer | `dmux` | DeMultiplexer | `counter` | Counter |
-| `ring` | RingCounter | `adder` | FullAdder | `halfadder` | HalfAdder |
-| `7seg` | SevenSeg | `7segdec` | SevenSegDecoder | `adc` | ADC |
-| `dac` | DAC | `sram` | SRAM | `piso` | PisoShift |
-| `sipo` | SipoShift | `mono` | Monostable | `clk` | Clock |
+| dumpId | Java type | 元件 | dumpId | Java type | 元件 |
+|--------|-----------|------|--------|-----------|------|
+| `r` | `'r'` | Resistor | `c` | `'c'` | Capacitor |
+| `C` | 209 | PolarCapacitor | `l` | `'l'` | Inductor |
+| `w` | `'w'` | Wire | `s` | `'s'` | Switch (SPST) |
+| `S` | `'S'` | Switch2 (SPDT) | `p` | `'p'` | PushSwitch |
+| `MB` | 416 | MBB Switch | `f` | 404 | Fuse |
+| `b` | `'b'` | Box | `g` | `'g'` | Ground |
+| `R` | `'R'` | Rail | `V` | `'V'` | — |
+| `vr` | 172 | VarRail | `v` | `'v'` | Voltage |
+| `i` | `'i'` | Current | `clk` | — | Clock (alias of Rail) |
+| `sqr` | — | SquareRail (alias) | `d` | `'d'` | Diode |
+| `z` | `'z'` | Zener | `vc` | 176 | Varactor |
+| `td` | 175 | TunnelDiode | `t` | `'t'` | NPN Transistor |
+| `T` | — | PNP Transistor (alt) | `dar` | 400 | Darlington |
+| `ndar` | — | NDarlington | `pdar` | — | PDarlington |
+| `f` | `'f'` | NMOS | `p` | `'p'` | PMOS (conflict) |
+| `njf` | — | NJFET | `pjf` | — | PJFET |
+| `j` | `'j'` | JFET | `op` | `'a'` | OpAmp |
+| `opr` | 409 | OpAmpReal | `ops` | — | OpAmpSwap |
+| `ota` | 402 | OTA | `cc2` | 179 | CC2 |
+| `cccs` | 215 | CCCS | `ccvs` | 214 | CCVS |
+| `vccs` | 213 | VCCS | `vcvs` | 212 | VCVS |
+| `scr` | 177 | SCR | `diac` | 203 | Diac |
+| `triac` | 206 | Triac | `triode` | 173 | Triode |
+| `opt` | 407 | Optocoupler | `AND` | 150 | AndGate |
+| `ND` | 151 | NandGate | `OR` | 152 | OrGate |
+| `NR` | 153 | NorGate | `XOR` | 154 | XorGate |
+| `NOT` | `'I'` | Inverter | `li` | `'L'` | LogicInput |
+| `lo` | `'M'` | LogicOutput | `D` | 155 | DFlipFlop |
+| `JK` | 156 | JKFlipFlop | `T` | 193 | TFlipFlop |
+| `latch` | 168 | Latch | `schmitt` | 182 | Schmitt |
+| `invschmitt` | 183 | InvertingSchmitt | `ts` | 180 | TriState |
+| `comp` | 401 | Comparator | `as` | 159 | AnalogSwitch |
+| `asw` | 160 | AnalogSwitch2 | `mux` | 184 | Multiplexer |
+| `dmux` | 185 | DeMultiplexer | `counter` | 164 | Counter |
+| `ring` | 163 | RingCounter | `adder` | 196 | FullAdder |
+| `halfadder` | 195 | HalfAdder | `7seg` | 157 | SevenSeg |
+| `7segdec` | 197 | SevenSegDecoder | `adc` | 167 | ADC |
+| `dac` | 166 | DAC | `sram` | 413 | SRAM |
+| `piso` | 186 | PisoShift | `sipo` | 189 | SipoShift |
+| `mono` | 194 | Monostable | `tform` | `'T'` | Transformer |
+| `tform2` | 169 | TappedTransformer | `ctrans` | 406 | CustomTransformer |
+| `tline` | 171 | TransLine | `xtal` | 412 | Crystal |
+| `relay` | 178 | Relay | `tdrelay` | 414 | TimeDelayRelay |
+| `dcm` | 415 | DCMotor | `lamp` | 181 | Lamp |
+| `led` | 162 | LED | `ledarray` | 405 | LEDArray |
+| `spark` | 187 | SparkGap | `probe` | `'p'` | Probe |
+| `a` | 370 | Ammeter | `ohm` | 216 | OhmMeter |
+| `o` | `'O'` | Output | `tp` | 368 | TestPoint |
+| `scope` | 403 | ScopeElm | `pc` | 161 | PhaseComp |
+| `rec` | 210 | DataRecorder | `st` | 408 | StopTrigger |
+| `text` | `'x'` | TextElm | `label` | 207 | LabeledNode |
+| `audio` | 211 | AudioOutput | `aIn` | 411 | AudioInput |
+| `pot` | 174 | PotElm | `therm` | 350 | ThermistorNTC |
+| `ldr` | 374 | LDR | `mem` | `'m'` | Memristor |
+| `am` | 200 | AMElm | `fm` | 201 | FMElm |
+| `noise` | `'n'` | Noise | `sweep` | 170 | SweepElm |
+| `ant` | `'A'` | Antenna | `vco` | 158 | VCO |
+| `seq` | 188 | SeqGen | `timer` | 165 | Timer |
+| `cl` | 208 | CustomLogic | `ccomp` | 410 | CustomComposite |
 
-> 注意: 部分 type id 有冲突（如 `T` 既是 PNP 晶体管也是 TFlipFlop），需通过 flags 或参数数量区分。
+> **注意**: 部分 type id 有冲突（如 `'T'` 既是 Transformer 也是 TFlipFlop），需通过上下文或 flags 区分。Java CirSim 中单字符优先走 `switch(getDumpType())` 数值分支，长名称走 `constructElement(name)` 字符串分支。
 
 ---
 

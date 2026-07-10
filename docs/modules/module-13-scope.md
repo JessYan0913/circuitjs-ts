@@ -2,6 +2,7 @@
 
 > **目标**: 完整实现示波器功能，包括波形显示、触发系统、FFT 频谱分析。
 > **优先级**: P3 — 高级功能
+> **原始 Java 源码位置**: `E:\circuitjs1\src\com\lushprojects\circuitjs1\client\`
 
 ---
 
@@ -14,12 +15,15 @@
 | `ScopePopupMenu.java` | — | ❌ |
 | `ScopePropertiesDialog.java` | — | ❌ |
 | `FFT.java` | (新建) `packages/core/math/FFT.ts` | ❌ |
+| — | `packages/shared/src/types.ts:ScopeConfig/ScopePlotConfig` | ✅ 接口定义 |
 
 ---
 
 ## 当前状态
 
 > **完全未实现** — Scope 是 CircuitJS 的核心功能。
+
+TS 中仅定义了 ScopeConfig 和 ScopePlotConfig 接口（在 `packages/shared/src/types.ts` 中）。
 
 ---
 

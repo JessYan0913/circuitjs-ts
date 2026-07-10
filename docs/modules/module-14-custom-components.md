@@ -2,6 +2,7 @@
 
 > **目标**: 实现用户自定义复合元件（子电路封装）和自定义逻辑元件（布尔表达式）。
 > **优先级**: P3 — 高级功能
+> **原始 Java 源码位置**: `E:\circuitjs1\src\com\lushprojects\circuitjs1\client\`
 
 ---
 

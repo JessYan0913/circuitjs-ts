@@ -2,6 +2,7 @@
 
 > **目标**: 完整实现菜单系统、工具栏、编辑对话框、滑块系统。
 > **优先级**: P2 — UI 和交互系统
+> **原始 Java 源码位置**: `E:\circuitjs1\src\com\lushprojects\circuitjs1\client\`
 
 ---
 
@@ -9,9 +10,9 @@
 
 | Java | TS | 状态 |
 |------|-----|------|
-| `CirSim.java` (UI 部分) | `packages/ui/components/App.tsx` | ✅ 基础 |
-| `EditDialog.java` | (新建) `packages/ui/components/EditDialog.tsx` | ❌ |
-| `EditInfo.java` | — | ❌ |
+| `CirSim.java` (UI 部分) | `packages/ui/components/App.tsx` | ✅ 已实现（基础布局） |
+| `EditDialog.java` | `packages/ui/components/dialogs/EditDialog.tsx` | ❌ |
+| `EditInfo.java` | `packages/shared/src/types.ts:EditInfo` | ✅ 接口定义 |
 | `EditOptions.java` | — | ❌ |
 | `EditDiodeModelDialog.java` | — | ❌ |
 | `EditTransistorModelDialog.java` | — | ❌ |
@@ -21,13 +22,17 @@
 | `ExportAsImageDialog.java` | — | ❌ |
 | `ExportAsLocalFileDialog.java` | — | ❌ |
 | `ImportFromTextDialog.java` | — | ❌ |
+| `ImportFromDropbox.java` / `ImportFromDropboxDialog.java` | — | ❌ |
 | `SliderDialog.java` | — | ❌ |
 | `AboutBox.java` | — | ❌ |
 | `ShortcutsDialog.java` | — | ❌ |
-| — | `packages/ui/store/circuitStore.ts` | ✅ |
-| — | (新建) `packages/ui/components/MenuBar.tsx` | ❌ |
-| — | (新建) `packages/ui/components/Toolbar.tsx` | ❌ |
-| — | (新建) `packages/ui/components/dialogs/` | ❌ |
+| `MyCommand.java` | — | ❌ |
+| `Checkbox.java` / `CheckboxMenuItem.java` / `CheckboxAlignedMenuItem.java` | — | ❌ |
+| `Choice.java` | — | ❌ |
+| `Scrollbar.java` | — | ❌ |
+| `ScrollValuePopup.java` | — | ❌ |
+| — | `packages/ui/store/circuitStore.ts` | ✅ 已实现 |
+| — | `packages/ui/store/types.ts` | ✅ 已实现 |
 
 ---
 
@@ -36,6 +41,7 @@
 - [x] 基本 App 布局（菜单栏占位、Canvas、状态栏）
 - [x] 仿真控制按钮（Start, Stop, Step）
 - [x] 状态栏显示
+- [x] `EditInfo` 接口定义（含 name/value/text/choices/checkbox/button 等）
 
 ---
 
@@ -46,6 +52,7 @@
 - [ ] **Open File** — 打开 .circuit/.txt 文件
 - [ ] **Save As** — 导出为文件
 - [ ] **Import From Text** — 文本编辑框粘贴
+- [ ] **Import From Dropbox** — Dropbox 导入
 - [ ] **Export As Text** — 复制电路文本
 - [ ] **Export As URL** — 压缩 URL
 - [ ] **Export As Image** — PNG 截图

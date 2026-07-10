@@ -2,6 +2,7 @@
 
 > **目标**: 导入原始示例电路，实现示例浏览器 UI。
 > **优先级**: P4 — 部署与扩展
+> **原始 Java 源码位置**: `E:\circuitjs1\public\circuits\`
 
 ---
 
@@ -10,7 +11,7 @@
 | 原始 | 目标 | 状态 |
 |------|------|------|
 | `circuitjs1/public/circuits/` | `packages/circuits/` | ❌ 空 |
-| `setuplist.txt` | `packages/ui/public/circuits/` | ❌ |
+| `setuplist.txt` | — | ❌ |
 | — | 示例浏览器 UI | ❌ |
 
 ---

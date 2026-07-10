@@ -2,6 +2,7 @@
 
 > **目标**: 实现 Electron 桌面应用，支持原生文件对话框、系统菜单、拖放加载。
 > **优先级**: P4 — 部署与扩展
+> **原始参考**: `E:\circuitjs1\app\`（原始 Electron wrapper）
 
 ---
 
@@ -10,8 +11,8 @@
 | 原始 | TS | 状态 |
 |------|-----|------|
 | `app/main.js` | `packages/electron/src/main.ts` | ❌ 仅占位符 |
-| `app/preload.js` | — | ❌ |
-| `app/renderer.js` | — | ❌ |
+| `app/preload.js` | `packages/electron/src/preload.ts` | ❌ |
+| — | `packages/electron/` | ❌ 空目录 |
 
 ---
 

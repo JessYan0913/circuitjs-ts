@@ -2,6 +2,7 @@
 
 > **目标**: 实现 Model Context Protocol (MCP) 服务器，允许 AI 工具与电路仿真交互。
 > **优先级**: P4 — 部署与扩展
+> **原始参考**: `E:\circuitjs1\app\main.js`（实验性 MCP-over-SSE）
 
 ---
 
@@ -22,6 +23,7 @@ circuitjs1 `app/main.js` 中已有 MCP-over-SSE 实验性实现，提供:
 | 文件 | 状态 |
 |------|------|
 | `packages/mcp-server/src/index.ts` | ❌ 仅占位符 |
+| `packages/mcp-server/` | ❌ 空目录 |
 
 ---
 
