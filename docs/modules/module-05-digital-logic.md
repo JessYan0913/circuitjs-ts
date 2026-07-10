@@ -10,8 +10,8 @@
 
 | 元件 | dump type | Java type | 状态 |
 |------|-----------|-----------|------|
-| `LogicInputElm.java` | `li` | 字符 `'L'` | ❌ |
-| `LogicOutputElm.java` | `lo` | 字符 `'M'` | ❌ |
+| `LogicInputElm.java` | `li` | 字符 `'L'` | ✅ |
+| `LogicOutputElm.java` | `lo` | 字符 `'M'` | ✅ |
 
 - 逻辑输入：点击切换 0/1，可设高/低电压值和 label
 - 逻辑输出：显示高/低状态（颜色+标签）
@@ -24,20 +24,20 @@
 
 | 元件 | dump type | Java type | 状态 | 门数配置 |
 |------|-----------|-----------|------|----------|
-| `AndGateElm.java` | `AND` | 150 | ❌ | 2-8 输入 |
-| `NandGateElm.java` | `ND` | 151 | ❌ | 2-8 输入 |
-| `OrGateElm.java` | `OR` | 152 | ❌ | 2-8 输入 |
-| `NorGateElm.java` | `NR` | 153 | ❌ | 2-8 输入 |
-| `XorGateElm.java` | `XOR` | 154 | ❌ | 2-8 输入 |
-| `InverterElm.java` | `NOT` | 字符 `'I'` | ❌ | 单输入 |
-| `SchmittElm.java` | `schmitt` | 182 | ❌ | 施密特触发器缓冲 |
-| `InvertingSchmittElm.java` | `invschmitt` | 183 | ❌ | 施密特触发器反相 |
+| `AndGateElm.java` | `AND` | 150 | ✅ | 2-8 输入 |
+| `NandGateElm.java` | `ND` | 151 | ✅ | 2-8 输入 |
+| `OrGateElm.java` | `OR` | 152 | ✅ | 2-8 输入 |
+| `NorGateElm.java` | `NR` | 153 | ✅ | 2-8 输入 |
+| `XorGateElm.java` | `XOR` | 154 | ✅ | 2-8 输入 |
+| `InverterElm.java` | `NOT` | 字符 `'I'` | ✅ | 单输入 |
+| `SchmittElm.java` | `schmitt` | 182 | ✅ | 施密特触发器缓冲 |
+| `InvertingSchmittElm.java` | `invschmitt` | 183 | ✅ | 施密特触发器反相 |
 
 **关键实现要点:**
-- [ ] RC 延迟模型替代理想门（避免代数环）
-- [ ] `calcOutput()` 方法
-- [ ] 每个元件容纳多个门（如 4×2-input NAND）
-- [ ] 绘制：AND=D 形，OR=弧形
+- [x] RC 延迟模型替代理想门（避免代数环）
+- [x] `calcOutput()` 方法
+- [x] 每个元件容纳多个门（如 4×2-input NAND）
+- [x] 绘制：AND=D 形，OR=弧形
 
 ---
 
@@ -45,10 +45,10 @@
 
 | 元件 | dump type | Java type | 状态 |
 |------|-----------|-----------|------|
-| `DFlipFlopElm.java` | `D` | 155 | ❌ |
-| `JKFlipFlopElm.java` | `JK` | 156 | ❌ |
-| `TFlipFlopElm.java` | `T` | 193 | ❌ |
-| `LatchElm.java` | `latch` | 168 | ❌ |
+| `DFlipFlopElm.java` | `D` | 155 | ✅ |
+| `JKFlipFlopElm.java` | `JK` | 156 | ✅ |
+| `TFlipFlopElm.java` | `T` | 193 | ✅ |
+| `LatchElm.java` | `latch` | 168 | ✅ |
 
 - Reset/Preset 引脚
 - 时钟触发（上升沿/下降沿）
@@ -59,25 +59,25 @@
 
 | 元件 | dump type | Java type | 状态 | 说明 |
 |------|-----------|-----------|------|------|
-| `MultiplexerElm.java` | `mux` | 184 | ❌ | 数据选择器 |
-| `DeMultiplexerElm.java` | `dmux` | 185 | ❌ | 数据分配器 |
-| `CounterElm.java` | `counter` | 164 | ❌ | 计数器 |
-| `RingCounterElm.java` | `ring` | 163 | ❌ | 环形计数器 |
-| `FullAdderElm.java` | `adder` | 196 | ❌ | 全加器 |
-| `HalfAdderElm.java` | `halfadder` | 195 | ❌ | 半加器 |
-| `SevenSegElm.java` | `7seg` | 157 | ❌ | 7 段数码管 |
-| `SevenSegDecoderElm.java` | `7segdec` | 197 | ❌ | 7 段译码器 |
-| `ADCElm.java` | `adc` | 167 | ❌ | 模数转换器 |
-| `DACElm.java` | `dac` | 166 | ❌ | 数模转换器 |
-| `SRAMElm.java` | `sram` | 413 | ❌ | 静态随机存取存储器 |
-| `PisoShiftElm.java` | `piso` | 186 | ❌ | 并行输入串行输出 |
-| `SipoShiftElm.java` | `sipo` | 189 | ❌ | 串行输入并行输出 |
-| `MonostableElm.java` | `mono` | 194 | ❌ | 单稳态触发器 |
+| `MultiplexerElm.java` | `mux` | 184 | ✅ | 数据选择器 |
+| `DeMultiplexerElm.java` | `dmux` | 185 | ✅ | 数据分配器 |
+| `CounterElm.java` | `counter` | 164 | ✅ | 计数器 |
+| `RingCounterElm.java` | `ring` | 163 | ✅ | 环形计数器 |
+| `FullAdderElm.java` | `adder` | 196 | ✅ | 全加器 |
+| `HalfAdderElm.java` | `halfadder` | 195 | ✅ | 半加器 |
+| `SevenSegElm.java` | `7seg` | 157 | ✅ | 7 段数码管 |
+| `SevenSegDecoderElm.java` | `7segdec` | 197 | ✅ | 7 段译码器 |
+| `ADCElm.java` | `adc` | 167 | ✅ | 模数转换器 |
+| `DACElm.java` | `dac` | 166 | ✅ | 数模转换器 |
+| `SRAMElm.java` | `sram` | 413 | ✅ | 静态随机存取存储器 |
+| `PisoShiftElm.java` | `piso` | 186 | ✅ | 并行输入串行输出 |
+| `SipoShiftElm.java` | `sipo` | 189 | ✅ | 串行输入并行输出 |
+| `MonostableElm.java` | `mono` | 194 | ✅ | 单稳态触发器 |
 
 **ChipElm 基类提供:**
-- [ ] 多引脚布局（芯片两侧排列）
-- [ ] 引脚编号和命名
-- [ ] 默认绘制：矩形 + 引脚线 + 标签
+- [x] 多引脚布局（芯片两侧排列）
+- [x] 引脚编号和命名
+- [x] 默认绘制：矩形 + 引脚线 + 标签
 
 ---
 
@@ -85,9 +85,9 @@
 
 | 元件 | dump type | Java type | 状态 |
 |------|-----------|-----------|------|
-| `AnalogSwitchElm.java` | `as` | 159 | ❌ |
-| `AnalogSwitch2Elm.java` | `asw` | 160 | ❌ |
-| `TriStateElm.java` | `ts` | 180 | ❌ |
+| `AnalogSwitchElm.java` | `as` | 159 | ✅ |
+| `AnalogSwitch2Elm.java` | `asw` | 160 | ✅ |
+| `TriStateElm.java` | `ts` | 180 | ✅ |
 
 ---
 
@@ -95,9 +95,9 @@
 
 | 元件 | dump type | Java type | 状态 |
 |------|-----------|-----------|------|
-| `CustomLogicElm.java` | `cl` | 208 | ❌ |
-| `CustomCompositeElm.java` | `ccomp` | 410 | ❌ |
-| `CustomCompositeChipElm.java` | `cchip` | — | ❌ |
+| `CustomLogicElm.java` | `cl` | 208 | ✅ |
+| `CustomCompositeElm.java` | `ccomp` | 410 | ✅ |
+| `CustomCompositeChipElm.java` | `cchip` | — | ✅ |
 
 - `CustomLogicModel`: 布尔表达式字符串
 - `CustomCompositeModel`: 子电路网络

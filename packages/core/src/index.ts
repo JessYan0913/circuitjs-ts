@@ -53,3 +53,43 @@ import './components/active/JfetComponent.js';
 import './components/active/OpAmpComponent.js';
 import './components/active/SCRComponent.js';
 import './components/active/ControlledSources.js';
+
+// Digital Logic (Module 5) — gates
+import './components/gates/GateComponent.js';
+import './components/gates/AndGateComponent.js';
+import './components/gates/NandGateComponent.js';
+import './components/gates/OrGateComponent.js';
+import './components/gates/NorGateComponent.js';
+import './components/gates/XorGateComponent.js';
+import './components/gates/InverterComponent.js';
+import './components/gates/SchmittComponent.js';
+import './components/gates/InvertingSchmittComponent.js';
+import './components/gates/LogicInputComponent.js';
+import './components/gates/LogicOutputComponent.js';
+import './components/gates/DFlipFlopComponent.js';
+import './components/gates/JKFlipFlopComponent.js';
+import './components/gates/TFlipFlopComponent.js';
+import './components/gates/LatchComponent.js';
+// Digital Logic (Module 5) — chips & switches
+import './components/chips/MultiplexerComponent.js';
+import './components/chips/DeMultiplexerComponent.js';
+import './components/chips/CounterComponent.js';
+import './components/chips/RingCounterComponent.js';
+import './components/chips/FullAdderComponent.js';
+import './components/chips/HalfAdderComponent.js';
+import './components/chips/SevenSegComponent.js';
+import './components/chips/SevenSegDecoderComponent.js';
+import './components/chips/ADCComponent.js';
+import './components/chips/DACComponent.js';
+import './components/chips/SRAMComponent.js';
+import './components/chips/PisoShiftComponent.js';
+import './components/chips/SipoShiftComponent.js';
+import './components/chips/MonostableComponent.js';
+import './components/chips/AnalogSwitchComponent.js';
+import './components/chips/AnalogSwitch2Component.js';
+import './components/chips/TriStateComponent.js';
+
+// Custom logic (Module 5.6)
+import './components/composite/CustomLogicComponent.js';
+import './components/composite/CustomCompositeComponent.js';
+import './components/composite/CustomCompositeChipComponent.js';

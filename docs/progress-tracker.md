@@ -9,17 +9,17 @@
 ## 全局概览
 
 ```
-██ 完成 ████░░░░░░░░░░ 21% 核心元件  (27/96+ 元件)
+██ 完成 ████████████░░░░░░ 41% 核心元件  (79/96+ 元件)
 ```
 
 | 指标 | 数值 |
 |------|------|
 | 总模块数 | 19 (模块 0–18) |
 | 已完成模块 | 1 |
-| 进行中模块 | 4 (00, 02, 03, 10, 11) |
+| 进行中模块 | 6 (00, 02, 03, 05, 10, 11) |
 | 未开始模块 | 13 |
-| 已实现元件 | 45 / 96+ |
-| 序列化支持 | 45 / 96+ |
+| 已实现元件 | 79 / 96+ |
+| 序列化支持 | 79 / 96+ |
 
 ---
 
@@ -40,7 +40,7 @@
 | 模块 | 进度 | 状态 | 完成项 | 总计 |
 |------|------|------|--------|------|
 | 模块 4 — 半导体 | `████████████░░░░ 50%` | 🔄 进行中 | 18 | 36 |
-| 模块 5 — 数字逻辑 | `░░░░░░░░░░░░░░ 0%` | ⏳ 待开始 | 0 | 45 |
+| 模块 5 — 数字逻辑 | `████████████████░░░░ 76%` | 🔄 进行中 | 34 | 45 |
 | 模块 6 — 变压器/机电 | `░░░░░░░░░░░░░░ 0%` | ⏳ 待开始 | 0 | 12 |
 | 模块 7 — 测量与显示 | `░░░░░░░░░░░░░░ 7%` | ⏳ 待开始 | 1 | 13 |
 
@@ -73,7 +73,7 @@
 
 ## 元件注册表进度
 
-当前注册 27 个元件，目标 90+。
+当前注册 79 个元件，目标 90+。
 
 | 元件 | dumpId | 文件 | 状态 |
 |------|--------|------|------|
@@ -116,6 +116,40 @@
 | VCO | `158` | `VCOComponent.ts` | ✅ |
 | SeqGen | `188` | `SeqGenComponent.ts` | ✅ |
 | Timer (555) | `165` | `TimerComponent.ts` | ✅ |
+| LogicInput | `L` (76) | `LogicInputComponent.ts` | ✅ |
+| LogicOutput | `M` (77) | `LogicOutputComponent.ts` | ✅ |
+| AND Gate | `150` | `AndGateComponent.ts` | ✅ |
+| NAND Gate | `151` | `NandGateComponent.ts` | ✅ |
+| OR Gate | `152` | `OrGateComponent.ts` | ✅ |
+| NOR Gate | `153` | `NorGateComponent.ts` | ✅ |
+| XOR Gate | `154` | `XorGateComponent.ts` | ✅ |
+| Inverter | `I` (73) | `InverterComponent.ts` | ✅ |
+| Schmitt Trigger | `182` | `SchmittComponent.ts` | ✅ |
+| Inv. Schmitt | `183` | `InvertingSchmittComponent.ts` | ✅ |
+| D Flip-Flop | `155` | `DFlipFlopComponent.ts` | ✅ |
+| JK Flip-Flop | `156` | `JKFlipFlopComponent.ts` | ✅ |
+| T Flip-Flop | `193` | `TFlipFlopComponent.ts` | ✅ |
+| Latch | `168` | `LatchComponent.ts` | ✅ |
+| Multiplexer | `184` | `MultiplexerComponent.ts` | ✅ |
+| DeMultiplexer | `185` | `DeMultiplexerComponent.ts` | ✅ |
+| Counter | `164` | `CounterComponent.ts` | ✅ |
+| Ring Counter | `163` | `RingCounterComponent.ts` | ✅ |
+| Full Adder | `196` | `FullAdderComponent.ts` | ✅ |
+| Half Adder | `195` | `HalfAdderComponent.ts` | ✅ |
+| 7-Segment | `157` | `SevenSegComponent.ts` | ✅ |
+| 7-Seg Decoder | `197` | `SevenSegDecoderComponent.ts` | ✅ |
+| ADC | `167` | `ADCComponent.ts` | ✅ |
+| DAC | `166` | `DACComponent.ts` | ✅ |
+| SRAM | `413` | `SRAMComponent.ts` | ✅ |
+| PISO Shift | `186` | `PisoShiftComponent.ts` | ✅ |
+| SIPO Shift | `189` | `SipoShiftComponent.ts` | ✅ |
+| Monostable | `194` | `MonostableComponent.ts` | ✅ |
+| Analog Switch | `159` | `AnalogSwitchComponent.ts` | ✅ |
+| Analog Switch2 | `160` | `AnalogSwitch2Component.ts` | ✅ |
+| Tri-State | `180` | `TriStateComponent.ts` | ✅ |
+| Custom Logic | `208` | `CustomLogicComponent.ts` | ✅ |
+| Custom Composite | `410` | `CustomCompositeComponent.ts` | ✅ |
+| Custom Chip | `cchip` | `CustomCompositeChipComponent.ts` | ✅ |
 
 ---
 

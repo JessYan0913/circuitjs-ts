@@ -122,9 +122,9 @@ export class Serializer {
                 continue;
             }
 
-            const typeCode = typeToken.length === 1
+            const typeCode: number | string = typeToken.length === 1
                 ? typeToken.charCodeAt(0)
-                : parseInt(typeToken);
+                : (isNaN(parseInt(typeToken)) ? typeToken : parseInt(typeToken));
 
             if (tokens.length < 6) continue;
 
