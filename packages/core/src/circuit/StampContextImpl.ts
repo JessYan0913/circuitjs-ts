@@ -61,4 +61,13 @@ export class StampContextImpl {
     updateVoltageSource(n1: number, n2: number, vsIndex: number, voltage: number): void {
         this.matrix.updateVoltageSource(n1, n2, vsIndex, voltage);
     }
+
+    stampNodeMatrix(node: number, col: number, value: number): void {
+        if (node === 0) return;
+        this.matrix.addValue(node - 1, col, value);
+    }
+
+    getVoltageSourceRow(vsIndex: number): number {
+        return this.matrix.numNodeRows + vsIndex;
+    }
 }

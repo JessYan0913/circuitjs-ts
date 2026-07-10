@@ -9,7 +9,7 @@
 ## 全局概览
 
 ```
-██ 完成 ████░░░░░░░░░░ 18% 核心元件  (18/96+ 元件)
+██ 完成 ████░░░░░░░░░░ 21% 核心元件  (27/96+ 元件)
 ```
 
 | 指标 | 数值 |
@@ -18,8 +18,8 @@
 | 已完成模块 | 1 |
 | 进行中模块 | 4 (00, 02, 03, 10, 11) |
 | 未开始模块 | 13 |
-| 已实现元件 | 18 / 96+ |
-| 序列化支持 | 18 / 96+ |
+| 已实现元件 | 27 / 96+ |
+| 序列化支持 | 27 / 96+ |
 
 ---
 
@@ -32,7 +32,7 @@
 | 模块 0 — 基础层 | `████████████░░░░ 70%` | ✅ 已完成 | 23 | 23 (另有 21 项 Java 对照补全程待后续迭代) |
 | 模块 1 — MNA 求解器 | `████████████████████ 100%` | ✅ 已完成 | 12 | 12 |
 | 模块 2 — 无源元件 | `██████░░░░░░░░ 26%` | 🔄 进行中 | 11 | 42 |
-| 模块 3 — 电源与信号源 | `██░░░░░░░░░░░░ 13%` | 🔄 进行中 | 4 | 30 |
+| 模块 3 — 电源与信号源 | `██████░░░░░░░░░░ 43%` | 🔄 进行中 | 13 | 30 |
 | 模块 9 — 序列化 | `████░░░░░░░░░░ 36%` | 🔄 进行中 | 4 | 11 |
 
 ### 第二阶段：模拟/数字元件补全 (P1)
@@ -73,7 +73,7 @@
 
 ## 元件注册表进度
 
-当前注册 18 个元件，目标 90+。
+当前注册 27 个元件，目标 90+。
 
 | 元件 | dumpId | 文件 | 状态 |
 |------|--------|------|------|
@@ -90,11 +90,20 @@
 | Box | `b` | `BoxComponent.ts` | ✅ |
 | Output | `o` | `OutputComponent.ts` | ✅ |
 | DC Voltage | `v` | `DCVoltageComponent.ts` | ✅ |
-| Rail | `V` | `RailComponent.ts` | ✅ |
+| Rail | `R` | `RailComponent.ts` | ✅ |
 | Current Source | `i` | `CurrentComponent.ts` | ✅ |
 | Ground | `g` | `GroundComponent.ts` | ✅ |
 | Diode | `d` | `DiodeComponent.ts` | ✅ |
 | Transistor | `t`/`T` | `TransistorComponent.ts` | ✅ |
+| VarRail | `172` | `VarRailComponent.ts` | ✅ |
+| Sweep | `170` | `SweepComponent.ts` | ✅ |
+| AM Source | `200` | `AMComponent.ts` | ✅ |
+| FM Source | `201` | `FMComponent.ts` | ✅ |
+| Noise Source | `n` | `NoiseComponent.ts` | ✅ |
+| Antenna | `A` | `AntennaComponent.ts` | ✅ |
+| VCO | `158` | `VCOComponent.ts` | ✅ |
+| SeqGen | `188` | `SeqGenComponent.ts` | ✅ |
+| Timer (555) | `165` | `TimerComponent.ts` | ✅ |
 
 ---
 

@@ -67,9 +67,11 @@
 
 ## 3.6 可变电压源 `VarRailElm.java`
 
-- [ ] **dump type**: `vr`（Java 中 type=172）
-- [ ] **实现 `Adjustable` 接口**：关联滑块
-- [ ] **绘制**: 箭头穿过圆形
+**TS**: `packages/core/components/sources/VarRailComponent.ts`
+
+- [x] **dump type**: `vr`（Java 中 type=172）
+- [x] **实现 `Adjustable` 接口**：关联滑块
+- [x] **绘制**: 箭头穿过圆形
 
 ---
 
@@ -77,14 +79,14 @@
 
 | 元件 | dump type | Java type | 状态 | 说明 |
 |------|-----------|-----------|------|------|
-| `SweepElm.java` | `swp` | 170 | ❌ | 扫频发生器 |
-| `AMElm.java` | `am` | 200 | ❌ | 调幅 |
-| `FMElm.java` | `fm` | 201 | ❌ | 调频 |
-| `NoiseElm.java` | `noise` | 字符 `'n'` | ❌ | 白噪声 |
-| `AntennaElm.java` | `ant` | 字符 `'A'` | ❌ | 天线输入 |
-| `VCOElm.java` | `vco` | 158 | ❌ | 压控振荡器 |
-| `SeqGenElm.java` | `seq` | 188 | ❌ | 序列发生器 |
-| `TimerElm.java` | `timer` | 165 | ❌ | 555 定时器行为模型 |
+| `SweepElm.java` | `swp` | 170 | ✅ | 扫频发生器 |
+| `AMElm.java` | `am` | 200 | ✅ | 调幅 |
+| `FMElm.java` | `fm` | 201 | ✅ | 调频 |
+| `NoiseElm.java` | `noise` | 字符 `'n'` | ✅ | 白噪声 |
+| `AntennaElm.java` | `ant` | 字符 `'A'` | ✅ | 天线输入 |
+| `VCOElm.java` | `vco` | 158 | ✅ | 压控振荡器 |
+| `SeqGenElm.java` | `seq` | 188 | ✅ | 序列发生器 |
+| `TimerElm.java` | `timer` | 165 | ✅ | 555 定时器行为模型 |
 
 ---
 

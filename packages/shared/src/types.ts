@@ -64,6 +64,10 @@ export interface StampContext {
     stampNonLinear(row: number): void;
     updateVoltageSource(n1: number, n2: number, vsIndex: number, voltage: number): void;
     markRightSideChanging(row: number): void;
+    /** Stamp matrix entry at (circuitNode, matrixCol). If node===0 (ground), the stamp is skipped. */
+    stampNodeMatrix(node: number, col: number, value: number): void;
+    /** Get the matrix row index for a voltage source's current variable */
+    getVoltageSourceRow(vsIndex: number): number;
     setConverged(value: boolean): void;
     timeStep: number;
     converged: boolean;

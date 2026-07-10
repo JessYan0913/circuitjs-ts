@@ -19,6 +19,12 @@ import { PushSwitchComponent } from '../components/passive/PushSwitchComponent.j
 import { MBBSwitchComponent } from '../components/passive/MBBSwitchComponent.js';
 import { FuseComponent } from '../components/passive/FuseComponent.js';
 import { BoxComponent } from '../components/passive/BoxComponent.js';
+import { NoiseComponent } from '../components/sources/NoiseComponent.js';
+import { AntennaComponent } from '../components/sources/AntennaComponent.js';
+import { VarRailComponent } from '../components/sources/VarRailComponent.js';
+import { SweepComponent } from '../components/sources/SweepComponent.js';
+import { AMComponent } from '../components/sources/AMComponent.js';
+import { FMComponent } from '../components/sources/FMComponent.js';
 
 export interface ParsedCircuit {
     header: CircuitHeader;
@@ -63,6 +69,12 @@ const XML_TAG_CLASS: Record<string, ComponentConstructor> = {
     MB: MBBSwitchComponent,
     Fuse: FuseComponent,
     b: BoxComponent,
+    // Source components
+    Noise: NoiseComponent,
+    Antenna: AntennaComponent,
+    Sweep: SweepComponent,
+    AM: AMComponent,
+    FM: FMComponent,
 };
 
 const DEFAULT_HEADER: CircuitHeader = {

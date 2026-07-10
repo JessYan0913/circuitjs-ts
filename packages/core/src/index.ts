@@ -34,3 +34,13 @@ import './components/passive/PushSwitchComponent.js';
 import './components/passive/MBBSwitchComponent.js';
 import './components/passive/FuseComponent.js';
 import './components/passive/BoxComponent.js';
+// Source components
+import './components/sources/NoiseComponent.js';
+import './components/sources/AntennaComponent.js';
+import './components/sources/VarRailComponent.js';
+import './components/sources/SweepComponent.js';
+import './components/sources/AMComponent.js';
+import './components/sources/FMComponent.js';
+import './components/sources/VCOComponent.js';
+import './components/sources/SeqGenComponent.js';
+import './components/sources/TimerComponent.js';
