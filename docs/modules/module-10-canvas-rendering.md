@@ -2,6 +2,7 @@
 
 > **目标**: 完善 Canvas 2D 图形上下文包装器、电路渲染主循环、绘制辅助函数。
 > **优先级**: P2 — UI 和交互系统
+> **状态**: ✅ 已完成
 > **原始 Java 源码位置**: `E:\circuitjs1\src\com\lushprojects\circuitjs1\client\`
 
 ---
@@ -16,6 +17,8 @@
 | — | `packages/ui/canvas/CircuitRenderer.ts` | ✅ 已实现 |
 | — | `packages/ui/canvas/renderer.ts` | ✅ 已实现 |
 | — | `packages/core/components/drawutils.ts` | ✅ 已实现 |
+| — | `packages/ui/canvas/WaveformRenderer.ts` | ✅ 已实现 |
+| — | `packages/ui/canvas/scope-capture.ts` | ✅ 已实现 |
 
 ---
 
@@ -24,7 +27,7 @@
 - [x] `setColor()` — 支持 string 和 ColorObj
 - [x] `setLineWidth()` / `getColor()`
 - [x] `drawLine()` / `drawThickLine()` / `drawThickCircle()`
-- [x] `drawCoil()` — 贝塞尔曲线线圈绘制（3 段半圆弧）
+- [x] `drawCoil()` — `arc()` 半圆弧线圈绘制（匹配 Java 4 段半圆弧算法）
 - [x] `drawPolyline()` / `drawPolygon()` / `fillPolygon()`
 - [x] `drawOval()` / `fillOval()`
 - [x] `drawRect()` / `fillRect()` / `drawRoundRect()` / `fillRoundRect()`
@@ -63,23 +66,36 @@
 - [x] 节点圆点（junction dots）
 - [x] 当前动画点（current dots）
 - [x] 悬停高亮
+- [x] 选中高亮框（蓝色虚线 boundingBox）
+- [x] Scope 波形绘制（网格、曲线、标记）
+- [x] 抗锯齿关闭 (`imageSmoothingEnabled = false`)
 
-### 待完善
+### 已实现
 
-- [ ] **选中高亮框** — 蓝色虚线框
-- [ ] **网格对齐** — 吸附到网格交叉点
-- [ ] **Scope 波形绘制** — 波形曲线、刻度网格、触发标记
-- [ ] **抗锯齿设置** — `imageSmoothingEnabled`
-- [ ] **缩放居中** — zoom 以鼠标位置为中心
-- [ ] **`drawCoil` 对齐 Java 4 段半圆弧算法** — 当前使用贝塞尔曲线近似
+- [x] **选中高亮框** — 蓝色虚线框，基于 boundingBox 绘制
+- [x] **网格对齐** — 吸附到网格交叉点（`snapGrid()`）
+- [x] **Scope 波形绘制** — `WaveformRenderer.ts`：波形曲线、刻度网格、零线标记
+- [x] **抗锯齿设置** — `imageSmoothingEnabled = false`
+- [x] **缩放居中** — zoom 以鼠标位置为中心
+- [x] **`drawCoil` 对齐 Java 4 段半圆弧算法** — 使用 `ctx.arc()` 半圆弧，`lineCap = 'round'`
+
+### 新增文件
+
+| 文件 | 说明 |
+|------|------|
+| `packages/ui/src/canvas/WaveformRenderer.ts` | 示波器波形绘制（网格、曲线、标记） |
+| `packages/ui/src/canvas/scope-capture.ts` | 示波器数据捕获工具（环形缓冲区） |
 
 ---
 
 ## 实现笔记
 
-- `drawCoil` 用于电感绘制，当前使用 Canvas bezierCurveTo 近似
+- `drawCoil` 用于电感绘制，当前使用 Canvas `arc()` 半圆弧绘制（匹配 Java 4 段半圆弧算法），带 `lineCap = 'round'`
 - `getVoltageColor` 直接影响导线着色的视觉效果
 - `interpPoint` 系是大量元件绘制的基础函数
+- 选中高亮使用蓝色虚线矩形 (`strokeStyle = '#4488FF'`, `setLineDash([3, 3])`)
+- 抗锯齿通过 `ctx.imageSmoothingEnabled = false` 全局关闭，保证像素精确渲染
+- 缩放已实现以鼠标位置为中心 (`zoom()` 方法中使用标准缩放公式)
 
 ---
 

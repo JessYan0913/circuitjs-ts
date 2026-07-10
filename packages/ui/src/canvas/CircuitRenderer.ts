@@ -73,6 +73,9 @@ export class CircuitRenderer {
         const { ctx, g } = this.ensureCtx(width, height);
         const comps = this.components();
 
+        // Disable anti-aliasing for pixel-precise circuit rendering
+        targetCtx.imageSmoothingEnabled = false;
+
         // Reset hover flags
         for (const c of comps) c._hovered = false;
 
@@ -137,6 +140,18 @@ export class CircuitRenderer {
             if (c.getPostCount() > 1) {
                 g.fillRect(c.x2 - 3, c.y2 - 3, 7, 7);
             }
+        }
+
+        // 7b. Selection highlight boxes (blue dashed rectangles around selected components)
+        for (const c of comps) {
+            if (c.isWire() || !c.selected) continue;
+            const bb = c.boundingBox;
+            if (bb.width === 0 && bb.height === 0) continue;
+            ctx.strokeStyle = '#4488FF';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.strokeRect(bb.x - 4, bb.y - 4, bb.width + 8, bb.height + 8);
+            ctx.setLineDash([]);
         }
 
         // 8. Labels

@@ -9,7 +9,9 @@ export class CanvasGraphics implements Graphics {
     /** Current font name (matches Java Graphics.currentFont) */
     currentFont: string | null = null;
 
-    constructor(public ctx: CanvasRenderingContext2D) {}
+    constructor(public ctx: CanvasRenderingContext2D) {
+        ctx.imageSmoothingEnabled = false;
+    }
 
     setColor(color: string | ColorObj): void {
         if (typeof color === 'string') {
@@ -57,33 +59,33 @@ export class CanvasGraphics implements Graphics {
         this.ctx.lineWidth = 1;
     }
 
-    drawCoil(x1: number, y1: number, x2: number, y2: number, segments: number, _color: string | ColorObj): void {
+    drawCoil(x1: number, y1: number, x2: number, y2: number, segments: number, color: string | ColorObj): void {
         const dx = x2 - x1;
         const dy = y2 - y1;
         const len = Math.sqrt(dx * dx + dy * dy);
         if (len < 1) return;
-        const segLen = len / segments;
-        const nx = dx / len;
-        const ny = dy / len;
-        const coilRadius = segLen * 0.45;
 
-        this.ctx.beginPath();
-        this.ctx.moveTo(Math.round(x1), Math.round(y1));
-        for (let i = 0; i < segments; i++) {
-            const ex = x1 + (i + 1) * segLen * nx;
-            const ey = y1 + (i + 1) * segLen * ny;
-            const direction = i % 2 === 0 ? 1 : -1;
-            const p1x = x1 + (i + 0.25) * segLen * nx + direction * coilRadius * ny;
-            const p1y = y1 + (i + 0.25) * segLen * ny - direction * coilRadius * nx;
-            const p2x = x1 + (i + 0.75) * segLen * nx + direction * coilRadius * ny;
-            const p2y = y1 + (i + 0.75) * segLen * ny - direction * coilRadius * nx;
-            this.ctx.bezierCurveTo(
-                Math.round(p1x), Math.round(p1y),
-                Math.round(p2x), Math.round(p2y),
-                Math.round(ex), Math.round(ey),
-            );
+        this.ctx.save();
+        this.ctx.lineWidth = 3;
+        this.ctx.lineCap = 'round';
+        this.ctx.translate(Math.round(x1), Math.round(y1));
+        this.ctx.rotate(Math.atan2(dy, dx));
+
+        if (typeof color === 'string' && color) {
+            this.ctx.strokeStyle = color;
         }
-        this.ctx.stroke();
+
+        for (let i = 0; i < segments; i++) {
+            this.ctx.beginPath();
+            const start = len * i / segments;
+            this.ctx.moveTo(start, 0);
+            this.ctx.arc(len * (i + 0.5) / segments, 0, len / (2 * segments), Math.PI, Math.PI * 2);
+            this.ctx.lineTo(len * (i + 1) / segments, 0);
+            this.ctx.stroke();
+        }
+
+        this.ctx.restore();
+        this.ctx.lineWidth = 1;
     }
 
     /** Open polyline (not closed) */
