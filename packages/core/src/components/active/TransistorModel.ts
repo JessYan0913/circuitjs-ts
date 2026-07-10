@@ -30,6 +30,7 @@ export class TransistorModel {
 
     dumped = false;
     builtIn = false;
+    readOnly = false;
 
     constructor();
 
@@ -79,16 +80,98 @@ export class TransistorModel {
         return model;
     }
 
+    private static _modelsCreated = false;
+
     private static createModelMap(): void {
-        if (TransistorModel.modelMap.size > 0) return;
-        TransistorModel.addDefaultModel('default', new TransistorModel('default', 1e-13));
-        TransistorModel.addDefaultModel('spice-default', new TransistorModel('spice-default', 1e-16));
+        if (TransistorModel._modelsCreated) return;
+        TransistorModel._modelsCreated = true;
+
+        const add = (name: string, params: Partial<TransistorModel> & { satCur: number }, desc?: string) => {
+            const m = new TransistorModel(name, params.satCur);
+            if (params.invRollOffF !== undefined) m.invRollOffF = params.invRollOffF;
+            if (params.BEleakCur !== undefined) m.BEleakCur = params.BEleakCur;
+            if (params.leakBEemissionCoeff !== undefined) m.leakBEemissionCoeff = params.leakBEemissionCoeff;
+            if (params.invRollOffR !== undefined) m.invRollOffR = params.invRollOffR;
+            if (params.BCleakCur !== undefined) m.BCleakCur = params.BCleakCur;
+            if (params.leakBCemissionCoeff !== undefined) m.leakBCemissionCoeff = params.leakBCemissionCoeff;
+            if (params.emissionCoeffF !== undefined) m.emissionCoeffF = params.emissionCoeffF;
+            if (params.emissionCoeffR !== undefined) m.emissionCoeffR = params.emissionCoeffR;
+            if (params.invEarlyVoltF !== undefined) m.invEarlyVoltF = params.invEarlyVoltF;
+            if (params.invEarlyVoltR !== undefined) m.invEarlyVoltR = params.invEarlyVoltR;
+            if (params.betaR !== undefined) m.betaR = params.betaR;
+            if (desc) m.description = desc;
+            m.builtIn = true;
+            m.readOnly = true;
+            m.name = name;
+            TransistorModel.modelMap.set(name, m);
+        };
+
+        add('default', { satCur: 1e-13 });
+        add('spice-default', { satCur: 1e-16 });
+
+        // NPN models
+        add('2N3904', {
+            satCur: 6.734e-15,
+            emissionCoeffF: 1,
+            emissionCoeffR: 1,
+            invEarlyVoltF: 1 / 74.03,
+            invEarlyVoltR: 1 / 37.16,
+            betaR: 0.7371,
+            BEleakCur: 6.734e-15,
+            leakBEemissionCoeff: 1.259,
+            invRollOffF: 1 / 0.06678,
+        }, 'NPN general purpose');
+
+        add('BC547', {
+            satCur: 3.39e-14,
+            emissionCoeffF: 1,
+            emissionCoeffR: 1,
+            invEarlyVoltF: 1 / 72.7,
+            invEarlyVoltR: 1 / 28.34,
+            betaR: 1.544,
+            BEleakCur: 1.76e-14,
+            leakBEemissionCoeff: 1.5,
+            invRollOffF: 1 / 0.2115,
+        }, 'NPN general purpose');
+
+        // PNP models
+        add('2N3906', {
+            satCur: 1.413e-15,
+            emissionCoeffF: 1,
+            emissionCoeffR: 1,
+            invEarlyVoltF: 1 / 84.12,
+            invEarlyVoltR: 1 / 28.0,
+            betaR: 0.6702,
+            BEleakCur: 1.897e-14,
+            leakBEemissionCoeff: 1.503,
+            invRollOffF: 1 / 0.05981,
+        }, 'PNP general purpose');
+
+        add('BC557', {
+            satCur: 1.2e-14,
+            emissionCoeffF: 1,
+            emissionCoeffR: 1,
+            invEarlyVoltF: 1 / 63.2,
+            invEarlyVoltR: 1 / 25.0,
+            betaR: 1.2,
+            BEleakCur: 8.4e-15,
+            leakBEemissionCoeff: 1.4,
+            invRollOffF: 1 / 0.18,
+        }, 'PNP general purpose');
     }
 
-    private static addDefaultModel(name: string, model: TransistorModel): void {
-        TransistorModel.modelMap.set(name, model);
-        model.builtIn = true;
-        model.name = name;
+    /** Get sorted list of all models */
+    static getModelList(): TransistorModel[] {
+        TransistorModel.createModelMap();
+        const list = Array.from(TransistorModel.modelMap.values());
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        return list;
+    }
+
+    /** Human-readable description for UI dropdown */
+    getDescription(): string {
+        if (!this.description) return this.name;
+        return `${this.name} (${this.description})`;
     }
 
     static getDefaultModel(): TransistorModel {

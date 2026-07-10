@@ -24,10 +24,14 @@ export class DiodeModel {
 
     /** Model name (empty for inline/default models) */
     name = '';
+    /** Human-readable description (e.g., "switching", "Schottky") */
+    description = '';
     /** Whether this model has been dumped in the current dumpCircuit pass */
     dumped = false;
     /** Whether this is a built-in model (not user-defined) */
     builtIn = false;
+    /** Whether this model is read-only (built-in) */
+    readOnly = false;
 
     /** Reset dumped flags for all models (called at start of dumpCircuit) */
     static clearDumpedFlags(): void {
@@ -38,17 +42,20 @@ export class DiodeModel {
 
     /** Look up a model by name in the registry */
     static getModelWithName(name: string): DiodeModel | undefined {
+        DiodeModel.createModelMap();
         return DiodeModel.modelMap.get(name);
     }
 
     /** Get or create a model by name, using fallback as template */
     static getModelWithNameOrCreate(name: string, fallback: DiodeModel): DiodeModel {
+        DiodeModel.createModelMap();
         let model = DiodeModel.modelMap.get(name);
         if (!model) {
             model = fallback;
             model.name = name;
             model.dumped = false;
             model.builtIn = false;
+            model.readOnly = false;
             DiodeModel.modelMap.set(name, model);
         }
         return model;
@@ -77,6 +84,69 @@ export class DiodeModel {
         }
         DiodeModel.modelMap.set(name, model);
         return model;
+    }
+
+    /** Get the default diode model */
+    static getDefaultModel(): DiodeModel {
+        DiodeModel.createModelMap();
+        return DiodeModel.modelMap.get('default') ?? new DiodeModel();
+    }
+
+    /** Initialize the model map with built-in models (lazy, called on first access) */
+    private static _modelsCreated = false;
+
+    static createModelMap(): void {
+        if (DiodeModel._modelsCreated) return;
+        DiodeModel._modelsCreated = true;
+
+        // Map is already initialized as empty Map from the field declaration
+        const add = (name: string, sc: number, sr: number, ec: number, bv: number, desc?: string) => {
+            const dm = new DiodeModel();
+            dm.saturationCurrent = sc;
+            dm.seriesResistance = sr;
+            dm.emissionCoefficient = ec;
+            dm.breakdownVoltage = bv;
+            if (desc) dm.description = desc;
+            dm.builtIn = true;
+            dm.readOnly = true;
+            dm.name = name;
+            DiodeModel.modelMap.set(name, dm);
+        };
+
+        add('spice-default', 1e-14, 0, 1, 0);
+        add('default', 1.7143528192808883e-7, 0, 2, 0);
+        add('default-zener', 1.7143528192808883e-7, 0, 2, 5.6);
+        add('old-default-led', 2.2349907006671927e-18, 0, 2, 0);
+        add('default-led', 93.2e-12, 0.042, 3.73, 0);
+
+        add('1N5711', 315e-9, 2.8, 2.03, 70, 'Schottky');
+        add('1N5712', 680e-12, 12, 1.003, 20, 'Schottky');
+        add('1N34', 200e-12, 84e-3, 2.19, 60, 'germanium');
+        add('1N4004', 18.8e-9, 28.6e-3, 2, 400, 'general purpose');
+        add('1N4148', 4.352e-9, 0.6458, 1.906, 75, 'switching');
+    }
+
+    /** Get sorted list of models, optionally filtering for Zeners */
+    static getModelList(zener?: boolean): DiodeModel[] {
+        DiodeModel.createModelMap();
+        const list: DiodeModel[] = [];
+        for (const dm of DiodeModel.modelMap.values()) {
+            if (zener && dm.breakdownVoltage === 0) continue;
+            list.push(dm);
+        }
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        return list;
+    }
+
+    /** Human-readable description for UI dropdown */
+    getDescription(): string {
+        if (!this.description) return this.name;
+        return `${this.name} (${this.description})`;
+    }
+
+    /** Compare by name (for sorting) */
+    compareTo(other: DiodeModel): number {
+        return this.name.localeCompare(other.name);
     }
 
     private lastVoltage = 0;

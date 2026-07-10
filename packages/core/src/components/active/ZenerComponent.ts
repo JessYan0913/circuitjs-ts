@@ -2,6 +2,7 @@ import { CircuitComponent } from '../base/CircuitComponent.js';
 import type { StampContext, EditInfo, Graphics } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { DiodeModel } from './DiodeModel.js';
+import { escape } from '../../util/textEscape.js';
 import {
     setVoltageColor, drawThickLinePt, drawThickLineXY,
     interpPoint, interpPointPerp, interpPoint2, drawPost,
@@ -9,16 +10,49 @@ import {
 
 export class ZenerComponent extends CircuitComponent {
     model = new DiodeModel();
+    /** Name of shared DiodeModel (empty for inline/default model) */
+    modelName = '';
     private subIterations = 0;
     private breakdownVoltage = 5.6;
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
         this.model.breakdownVoltage = this.breakdownVoltage;
+        this.setup();
+    }
+
+    /** Resolve model from modelName */
+    setup(): void {
+        if (this.modelName) {
+            const newModel = DiodeModel.getModelWithNameOrCreate(this.modelName, this.model);
+            if (newModel !== this.model) {
+                newModel.breakdownVoltage = this.breakdownVoltage;
+                this.model = newModel;
+                this.modelName = newModel.name;
+            }
+        }
     }
 
     getDumpType(): number | string { return 'z'; }
     nonLinear(): boolean { return true; }
+
+    override dumpModel(): string | null {
+        if (!this.modelName) return null;
+        if (this.model.dumped) return null;
+        this.model.dumped = true;
+        return this.model.dump();
+    }
+
+    override dump(): string {
+        return `${super.dump()} ${escape(this.modelName || 'default')}`;
+    }
+
+    handleDumpData(tokens: string[], startIndex: number): void {
+        if (tokens.length > startIndex) {
+            this.modelName = tokens[startIndex];
+        }
+        this.setup();
+    }
 
     stamp(context: StampContext): void {
         context.stampNonLinear(this.nodes[0]);
@@ -40,18 +74,38 @@ export class ZenerComponent extends CircuitComponent {
     }
 
     getEditInfo(n: number): EditInfo | null {
-        if (n === 0) return { name: 'Breakdown voltage (Vz)', value: this.breakdownVoltage };
-        if (n === 1) return { name: 'Saturation current (Is)', value: this.model.saturationCurrent };
+        if (n === 0) {
+            const models = DiodeModel.getModelList(true); // zener=true
+            const idx = models.indexOf(this.model);
+            return {
+                name: 'Model',
+                value: 0,
+                choices: models.map(m => m.getDescription()),
+                selectedIndex: Math.max(0, idx),
+            };
+        }
+        if (n === 1) return { name: 'Breakdown voltage (Vz)', value: this.breakdownVoltage };
+        if (n === 2) return { name: 'Saturation current (Is)', value: this.model.saturationCurrent };
         return null;
     }
 
     setEditValue(_n: number, ei: EditInfo): void {
+        if (_n === 0 && ei.selectedIndex !== undefined) {
+            const models = DiodeModel.getModelList(true);
+            const newModel = models[ei.selectedIndex];
+            if (newModel && newModel !== this.model) {
+                this.model = newModel;
+                this.model.breakdownVoltage = this.breakdownVoltage;
+                this.modelName = this.model.name;
+            }
+            return;
+        }
         if (ei.value !== undefined) {
-            if (_n === 0) {
+            if (_n === 1) {
                 this.breakdownVoltage = ei.value;
                 this.model.breakdownVoltage = ei.value;
             }
-            if (_n === 1) this.model.saturationCurrent = ei.value;
+            if (_n === 2) this.model.saturationCurrent = ei.value;
         }
     }
 

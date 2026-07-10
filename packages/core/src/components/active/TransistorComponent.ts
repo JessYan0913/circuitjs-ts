@@ -3,11 +3,12 @@ import type { StampContext, EditInfo, Graphics } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 import { interpPoint2 } from '../drawutils.js';
 import { TransistorModel } from './TransistorModel.js';
+import { escape } from '../../util/textEscape.js';
 
 const VT = 0.025865;
 
 /**
- * BJT Transistor (NPN/PNP) — Ebers-Moll model.
+ * BJT Transistor (NPN/PNP) — Gummel-Poon / Ebers-Moll model.
  * Port of Java TransistorElm (dump type 't')
  *
  * Post layout (matching Java):
@@ -20,12 +21,15 @@ export class TransistorComponent extends CircuitComponent {
     beta = 100;
     /** Name of shared TransistorModel (empty for default inline model) */
     modelName = '';
+    /** Resolved TransistorModel instance */
+    model: TransistorModel;
 
     private ic = 0;
     private ib = 0;
     private ie = 0;
     private lastVbe = 0;
     private lastVbc = 0;
+    private subIterations = 0;
 
     // Drawing geometry (computed in setPoints)
     private coll: { x: number; y: number }[] = [];
@@ -39,11 +43,16 @@ export class TransistorComponent extends CircuitComponent {
     private curcountE = 0;
     private curcountB = 0;
 
+    // Voltage limiting threshold (from satCur)
+    private vcrit: number;
+
     static readonly FLAG_FLIP = 1;
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
         this.noDiagonal = true;
+        this.model = TransistorModel.getDefaultModel();
+        this.vcrit = this.computeVcrit();
     }
 
     getDumpType(): number | string { return 't'; }
@@ -51,13 +60,31 @@ export class TransistorComponent extends CircuitComponent {
     nonLinear(): boolean { return true; }
     getVoltageSourceCount(): number { return 0; }
 
+    /** Resolve model from modelName; called after construction and model changes */
+    setup(): void {
+        if (this.modelName) {
+            this.model = TransistorModel.getModelWithNameOrCopy(this.modelName, this.model);
+            this.modelName = this.model.name;
+        } else {
+            this.model = TransistorModel.getDefaultModel();
+        }
+        this.vcrit = this.computeVcrit();
+    }
+
+    private computeVcrit(): number {
+        return VT * Math.log(VT / (Math.SQRT2 * this.model.satCur));
+    }
+
     /** Emit model dump line when a named model is referenced */
     override dumpModel(): string | null {
         if (!this.modelName) return null;
-        const model = TransistorModel.getModelWithName(this.modelName);
-        if (!model || model.dumped) return null;
-        model.dumped = true;
-        return model.dump();
+        if (this.model.dumped) return null;
+        this.model.dumped = true;
+        return this.model.dump();
+    }
+
+    override dump(): string {
+        return `${super.dump()} ${this.pnp} ${this.volts[0] - this.volts[1]} ${this.volts[0] - this.volts[2]} ${this.beta} ${escape(this.modelName || 'default')}`;
     }
 
     /** Post 0 = base = point1, post 1 = collector, post 2 = emitter */
@@ -77,7 +104,7 @@ export class TransistorComponent extends CircuitComponent {
         if (tokens.length > start + 4) {
             this.modelName = tokens[start + 4];
         }
-        // vbc/vbe are stored at start+1 / start+2 (used for initial condition restoration in Java)
+        this.setup();
     }
 
     isPNP(): boolean { return this.pnp === -1; }
@@ -190,6 +217,7 @@ export class TransistorComponent extends CircuitComponent {
         this.volts[0] = this.volts[1] = this.volts[2] = 0;
         this.lastVbc = this.lastVbe = this.curcountC = this.curcountE = this.curcountB = 0;
         this.ic = this.ib = this.ie = 0;
+        this.subIterations = 0;
     }
 
     stamp(context: StampContext): void {
@@ -198,11 +226,12 @@ export class TransistorComponent extends CircuitComponent {
         context.stampNonLinear(this.nodes[2]);
     }
 
-    // ---- Gummel-Poon / Ebers-Moll simplified model ----
-    // Ported from Java TransistorElm.doStep
+    stepFinished(): void {
+        this.subIterations = 0;
+    }
 
-    private vcrit = VT * Math.log(VT / (Math.SQRT2 * 1e-13));
-    private static readonly leakage = 1e-13;
+    // ---- Gummel-Poon / Ebers-Moll model ----
+    // Ported from Java TransistorElm.doStep
 
     private limitStep(vnew: number, vold: number): number {
         if (vnew > this.vcrit && Math.abs(vnew - vold) > (VT + VT)) {
@@ -229,8 +258,9 @@ export class TransistorComponent extends CircuitComponent {
         }
 
         let gmin = 1e-12;
-        if (context.converged === false) {
-            // Simplified: use subIterations info if available through other means
+        if (this.subIterations > 100) {
+            gmin = Math.exp(-9 * Math.log(10) * (1 - this.subIterations / 300));
+            if (gmin > 0.1) gmin = 0.1;
         }
 
         vbc = this.limitStep(vbc, this.lastVbc);
@@ -238,49 +268,91 @@ export class TransistorComponent extends CircuitComponent {
         this.lastVbc = vbc;
         this.lastVbe = vbe;
 
-        // Simplified Ebers-Moll (matches structure of original TS but with better numerics)
-        const csat = 1e-13; // model.satCur
-        const vtn = VT; // using 1.0 for emission coefficient
-        const gbeCoef = csat / vtn;
+        // Model parameters (matching Java TransistorElm.doStep)
+        const csat = this.model.satCur;
+        const oik = this.model.invRollOffF;
+        const c2 = this.model.BEleakCur;
+        const vte = this.model.leakBEemissionCoeff * VT;
+        const oikr = this.model.invRollOffR;
+        const c4 = this.model.BCleakCur;
+        const vtc = this.model.leakBCemissionCoeff * VT;
 
-        let evbe = 0, gbe = 0, cbe = 0;
+        // Forward bias
+        let vtn = VT * this.model.emissionCoeffF;
+        let evbe = 0, cbe = 0, gbe = 0, cben = 0, gben = 0, evben = 0;
         if (vbe > -5 * vtn) {
             evbe = Math.exp(vbe / vtn);
             cbe = csat * (evbe - 1) + gmin * vbe;
-            gbe = gbeCoef * evbe + gmin;
+            gbe = csat * evbe / vtn + gmin;
+            if (c2 === 0) {
+                cben = 0;
+                gben = 0;
+            } else {
+                evben = Math.exp(vbe / vte);
+                cben = c2 * (evben - 1);
+                gben = c2 * evben / vte;
+            }
         } else {
             gbe = -csat / vbe + gmin;
             cbe = gbe * vbe;
+            gben = -c2 / vbe;
+            cben = gben * vbe;
         }
 
-        let evbc = 0, gbc = 0, cbc = 0;
+        // Reverse bias
+        vtn = VT * this.model.emissionCoeffR;
+        let evbc = 0, cbc = 0, gbc = 0, cbcn = 0, gbcn = 0, evbcn = 0;
         if (vbc > -5 * vtn) {
             evbc = Math.exp(vbc / vtn);
             cbc = csat * (evbc - 1) + gmin * vbc;
-            gbc = gbeCoef * evbc + gmin;
+            gbc = csat * evbc / vtn + gmin;
+            if (c4 === 0) {
+                cbcn = 0;
+                gbcn = 0;
+            } else {
+                evbcn = Math.exp(vbc / vtc);
+                cbcn = c4 * (evbcn - 1);
+                gbcn = c4 * evbcn / vtc;
+            }
         } else {
             gbc = -csat / vbc + gmin;
             cbc = gbc * vbc;
+            gbcn = -c4 / vbc;
+            cbcn = gbcn * vbc;
         }
 
-        const alphaF = this.beta / (this.beta + 1);
-        const betaR = 1; // reverse beta ~ 1
-        const alphaR = betaR / (betaR + 1);
-        const qb = 1; // Simplified: no base charge modulation
+        // Base charge modulation (Early effect + roll-off)
+        const q1 = 1 / (1 - this.model.invEarlyVoltF * vbc - this.model.invEarlyVoltR * vbe);
+        let qb = 0, dqbdve = 0, dqbdvc = 0;
+        if (oik === 0 && oikr === 0) {
+            qb = q1;
+            dqbdve = q1 * qb * this.model.invEarlyVoltR;
+            dqbdvc = q1 * qb * this.model.invEarlyVoltF;
+        } else {
+            const q2 = oik * cbe + oikr * cbc;
+            const arg = Math.max(0, 1 + 4 * q2);
+            const sqarg = arg !== 0 ? Math.sqrt(arg) : 1;
+            qb = q1 * (1 + sqarg) / 2;
+            dqbdve = q1 * (qb * this.model.invEarlyVoltR + oik * gbe / sqarg);
+            dqbdvc = q1 * (qb * this.model.invEarlyVoltF + oikr * gbc / sqarg);
+        }
 
-        // Compute currents (simplified Ebers-Moll)
-        const cc = (cbe - cbc) / qb - cbc / betaR;
-        const cb = cbe / this.beta + cbc / betaR;
+        const cex = cbe;
+        const gex = gbe;
+
+        // Compute currents
+        const cc = (cex - cbc) / qb - cbc / this.model.betaR - cbcn;
+        const cb = cbe / this.beta + cben + cbc / this.model.betaR + cbcn;
 
         this.ic = this.pnp * cc;
         this.ib = this.pnp * cb;
         this.ie = this.pnp * (-cc - cb);
 
         // Conductances
-        const gpi = gbe / this.beta;
-        const gmu = gbc / betaR;
-        const go = gbc / qb;
-        const gm = gbe / qb - go;
+        const gpi = gbe / this.beta + gben;
+        const gmu = gbc / this.model.betaR + gbcn;
+        const go = (gbc + (cex - cbc) * dqbdvc / qb) / qb;
+        const gm = (gex - (cex - cbc) * dqbdve / qb) / qb - go;
 
         // Stamp matrix (matches Java layout)
         // Node 0 = base, 1 = collector, 2 = emitter
@@ -301,6 +373,8 @@ export class TransistorComponent extends CircuitComponent {
         context.stampRightSide(this.nodes[0], -ceqbe - ceqbc);
         context.stampRightSide(this.nodes[1], ceqbc);
         context.stampRightSide(this.nodes[2], ceqbe);
+
+        this.subIterations++;
     }
 
     calculateCurrent(): void {
@@ -320,11 +394,43 @@ export class TransistorComponent extends CircuitComponent {
 
     getEditInfo(n: number): EditInfo | null {
         if (n === 0) return { name: 'Beta/hFE', value: this.beta };
+        if (n === 1) {
+            const models = TransistorModel.getModelList();
+            const idx = models.indexOf(this.model);
+            return {
+                name: 'Model',
+                value: 0,
+                choices: models.map(m => m.getDescription()),
+                selectedIndex: Math.max(0, idx),
+            };
+        }
+        if (n === 2) {
+            return { name: 'Swap C/E', checkbox: true, checkboxState: (this.flags & TransistorComponent.FLAG_FLIP) !== 0 };
+        }
         return null;
     }
 
     setEditValue(_n: number, ei: EditInfo): void {
-        if (ei.value !== undefined && _n === 0) this.beta = ei.value;
+        if (_n === 0 && ei.value !== undefined) {
+            this.beta = ei.value;
+        }
+        if (_n === 1 && ei.selectedIndex !== undefined) {
+            const models = TransistorModel.getModelList();
+            const newModel = models[ei.selectedIndex];
+            if (newModel && newModel !== this.model) {
+                this.model = newModel;
+                this.modelName = this.model.name;
+                this.vcrit = this.computeVcrit();
+            }
+        }
+        if (_n === 2 && ei.checkboxState !== undefined) {
+            if (ei.checkboxState) {
+                this.flags |= TransistorComponent.FLAG_FLIP;
+            } else {
+                this.flags &= ~TransistorComponent.FLAG_FLIP;
+            }
+            this.setPoints();
+        }
     }
 
     getInfo(): string[] {
@@ -337,8 +443,9 @@ export class TransistorComponent extends CircuitComponent {
         } else if (vbe * this.pnp > 0.2) {
             region = 'fwd active';
         }
+        const modelLabel = this.modelName && this.modelName !== 'default' ? ` [${this.modelName}]` : '';
         return [
-            `${this.isPNP() ? 'PNP' : 'NPN'} Transistor (β=${this.beta})`,
+            `${this.isPNP() ? 'PNP' : 'NPN'} Transistor${modelLabel} (β=${this.beta})`,
             region,
             `Ic = ${this.ic.toExponential(2)} A`,
             `Ib = ${this.ib.toExponential(2)} A`,
