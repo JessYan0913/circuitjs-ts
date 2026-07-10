@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { Serializer, type CircuitComponent } from '@circuitjs/core';
 import { captureScopePoint, getScopeValue } from '../canvas/scope-capture.js';
 import { CircuitRenderer } from '../canvas/CircuitRenderer.js';
+import { CanvasGraphics } from '../canvas/CanvasGraphics.js';
 import { InteractionHandler, type ContextMenuState } from '../canvas/InteractionHandler.js';
 import { UndoStack } from '../canvas/UndoStack.js';
 import { useCircuitStore } from '../store/circuitStore.js';
@@ -51,6 +52,32 @@ export function CircuitCanvas({ onEditComponent, onAddComponentType, onUndoState
                 ctx.fillStyle = 'rgba(68, 136, 255, 0.1)';
                 ctx.fillRect(box.x1, box.y1, box.x2 - box.x1, box.y2 - box.y1);
                 ctx.setLineDash([]);
+            }
+        }
+
+        // Draw component being dragged (ADD_ELM preview)
+        if (handler) {
+            const dragElm = handler.getDragElm();
+            if (dragElm) {
+                ctx.save();
+                const { ox, oy, scale } = renderer.transform;
+                ctx.translate(ox, oy);
+                ctx.scale(scale, scale);
+
+                const g = new CanvasGraphics(ctx);
+                g.setLineWidth(2);
+                dragElm.draw(g);
+
+                // Draw posts at endpoints
+                for (let j = 0; j < dragElm.getPostCount(); j++) {
+                    const pt = dragElm.getPost(j);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
             }
         }
     }

@@ -212,6 +212,11 @@ export class InteractionHandler {
         };
     }
 
+    /** Get the component being dragged during ADD_ELM (for rendering preview) */
+    getDragElm(): CircuitComponent | null {
+        return this.state.dragElm;
+    }
+
     /** Open context menu at position (screen coords) */
     private openContextMenu(sx: number, sy: number, component: CircuitComponent | null): void {
         const t = this.renderer().transform;
@@ -389,9 +394,6 @@ export class InteractionHandler {
         const t = this.renderer().transform;
         const { x: gx, y: gy } = screenToGrid(sx, sy, t);
 
-        this.state.dragScreenX = sx;
-        this.state.dragScreenY = sy;
-
         if (this.state.dragStarted) {
             const dx = sx - this.state.dragScreenX;
             const dy = sy - this.state.dragScreenY;
@@ -452,6 +454,8 @@ export class InteractionHandler {
             }
         }
         this.callbacks.onRenderNeeded();
+        this.state.dragScreenX = sx;
+        this.state.dragScreenY = sy;
     }
 
     /** Mouse up */
@@ -474,6 +478,9 @@ export class InteractionHandler {
                 break;
             case MouseMode.DRAG_SELECTED:
                 this.callbacks.onTopologyChanged?.();
+                break;
+            case MouseMode.ADD_ELM:
+                this.finishAddElm();
                 break;
         }
 
@@ -727,6 +734,23 @@ export class InteractionHandler {
 
         this.callbacks.onComponentsChanged?.(comps);
         this.callbacks.onTopologyChanged?.();
+    }
+
+    // ---- Component placement (add from Draw menu) ----
+
+    private finishAddElm(): void {
+        if (!this.state.dragElm) return;
+
+        // Discard zero-size components (click without meaningful drag)
+        if (this.state.dragElm.x === this.state.dragElm.x2 && this.state.dragElm.y === this.state.dragElm.y2) {
+            this.state.dragElm = null;
+            return;
+        }
+
+        const comps = [...this.components(), this.state.dragElm];
+        this.callbacks.onComponentsChanged?.(comps);
+        this.callbacks.onTopologyChanged?.();
+        this.state.dragElm = null;
     }
 
     // ---- Box selection ----
