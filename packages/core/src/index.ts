@@ -44,3 +44,12 @@ import './components/sources/FMComponent.js';
 import './components/sources/VCOComponent.js';
 import './components/sources/SeqGenComponent.js';
 import './components/sources/TimerComponent.js';
+// Semiconductor / active components (Module 4)
+import './components/active/ZenerComponent.js';
+import './components/active/TunnelDiodeComponent.js';
+import './components/active/VaractorComponent.js';
+import './components/active/MosfetComponent.js';
+import './components/active/JfetComponent.js';
+import './components/active/OpAmpComponent.js';
+import './components/active/SCRComponent.js';
+import './components/active/ControlledSources.js';

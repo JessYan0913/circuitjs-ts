@@ -64,10 +64,12 @@ export class StampContextImpl {
 
     stampNodeMatrix(node: number, col: number, value: number): void {
         if (node === 0) return;
-        this.matrix.addValue(node - 1, col, value);
+        // node is 1-based; addValue internally decrements to 0-based
+        this.matrix.addValue(node, col, value);
     }
 
     getVoltageSourceRow(vsIndex: number): number {
-        return this.matrix.numNodeRows + vsIndex;
+        // Return 1-based row index (matching addValue convention)
+        return this.matrix.numNodeRows + 1 + vsIndex;
     }
 }

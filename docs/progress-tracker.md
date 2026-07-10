@@ -18,8 +18,8 @@
 | 已完成模块 | 1 |
 | 进行中模块 | 4 (00, 02, 03, 10, 11) |
 | 未开始模块 | 13 |
-| 已实现元件 | 27 / 96+ |
-| 序列化支持 | 27 / 96+ |
+| 已实现元件 | 45 / 96+ |
+| 序列化支持 | 45 / 96+ |
 
 ---
 
@@ -39,7 +39,7 @@
 
 | 模块 | 进度 | 状态 | 完成项 | 总计 |
 |------|------|------|--------|------|
-| 模块 4 — 半导体 | `░░░░░░░░░░░░░░ 5%` | ⏳ 待开始 | 2 | 36 |
+| 模块 4 — 半导体 | `████████████░░░░ 50%` | 🔄 进行中 | 18 | 36 |
 | 模块 5 — 数字逻辑 | `░░░░░░░░░░░░░░ 0%` | ⏳ 待开始 | 0 | 45 |
 | 模块 6 — 变压器/机电 | `░░░░░░░░░░░░░░ 0%` | ⏳ 待开始 | 0 | 12 |
 | 模块 7 — 测量与显示 | `░░░░░░░░░░░░░░ 7%` | ⏳ 待开始 | 1 | 13 |
@@ -95,6 +95,18 @@
 | Ground | `g` | `GroundComponent.ts` | ✅ |
 | Diode | `d` | `DiodeComponent.ts` | ✅ |
 | Transistor | `t`/`T` | `TransistorComponent.ts` | ✅ |
+| Zener | `z` | `ZenerComponent.ts` | ✅ |
+| Varactor | `176` | `VaractorComponent.ts` | ✅ |
+| Tunnel Diode | `175` | `TunnelDiodeComponent.ts` | ✅ |
+| NMOSFET | `f` | `MosfetComponent.ts` | ✅ |
+| PMOSFET | `p` | `MosfetComponent.ts` | ✅ |
+| JFET | `j` | `JfetComponent.ts` | ✅ |
+| OpAmp | `a` | `OpAmpComponent.ts` | ✅ |
+| SCR | `177` | `SCRComponent.ts` | ✅ |
+| VCCS | `213` | `ControlledSources.ts` | ✅ |
+| VCVS | `212` | `ControlledSources.ts` | ✅ |
+| CCCS | `215` | `ControlledSources.ts` | ✅ |
+| CCVS | `214` | `ControlledSources.ts` | ✅ |
 | VarRail | `172` | `VarRailComponent.ts` | ✅ |
 | Sweep | `170` | `SweepComponent.ts` | ✅ |
 | AM Source | `200` | `AMComponent.ts` | ✅ |
