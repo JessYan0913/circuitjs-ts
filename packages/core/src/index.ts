@@ -107,3 +107,16 @@ import './components/electromechanical/DCMotorComponent.js';
 import './components/electromechanical/CrystalComponent.js';
 import './components/electromechanical/LEDArrayComponent.js';
 import './components/electromechanical/SparkGapComponent.js';
+
+// Measurement & Display components (Module 7)
+import './components/measurement/TextElm.js';
+import './components/measurement/LabeledNodeElm.js';
+import './components/measurement/ProbeElm.js';
+import './components/measurement/AmmeterElm.js';
+import './components/measurement/OhmMeterElm.js';
+import './components/measurement/AudioOutputElm.js';
+import './components/measurement/TestPointElm.js';
+import './components/measurement/PhaseCompElm.js';
+import './components/measurement/DataRecorderElm.js';
+import './components/measurement/StopTriggerElm.js';
+import './components/measurement/AudioInputElm.js';

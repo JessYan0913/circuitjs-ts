@@ -25,6 +25,17 @@ import { VarRailComponent } from '../components/sources/VarRailComponent.js';
 import { SweepComponent } from '../components/sources/SweepComponent.js';
 import { AMComponent } from '../components/sources/AMComponent.js';
 import { FMComponent } from '../components/sources/FMComponent.js';
+import { TextElm } from '../components/measurement/TextElm.js';
+import { LabeledNodeElm } from '../components/measurement/LabeledNodeElm.js';
+import { ProbeElm } from '../components/measurement/ProbeElm.js';
+import { AmmeterElm } from '../components/measurement/AmmeterElm.js';
+import { OhmMeterElm } from '../components/measurement/OhmMeterElm.js';
+import { AudioOutputElm } from '../components/measurement/AudioOutputElm.js';
+import { TestPointElm } from '../components/measurement/TestPointElm.js';
+import { PhaseCompElm } from '../components/measurement/PhaseCompElm.js';
+import { DataRecorderElm } from '../components/measurement/DataRecorderElm.js';
+import { StopTriggerElm } from '../components/measurement/StopTriggerElm.js';
+import { AudioInputElm } from '../components/measurement/AudioInputElm.js';
 
 export interface ParsedCircuit {
     header: CircuitHeader;
@@ -75,6 +86,18 @@ const XML_TAG_CLASS: Record<string, ComponentConstructor> = {
     Sweep: SweepComponent,
     AM: AMComponent,
     FM: FMComponent,
+    // Measurement components
+    text: TextElm,
+    label: LabeledNodeElm,
+    probe: ProbeElm,
+    Ammeter: AmmeterElm,
+    OhmMeter: OhmMeterElm,
+    AudioOut: AudioOutputElm,
+    TestPoint: TestPointElm,
+    PhaseComp: PhaseCompElm,
+    Recorder: DataRecorderElm,
+    StopTrigger: StopTriggerElm,
+    AudioIn: AudioInputElm,
 };
 
 const DEFAULT_HEADER: CircuitHeader = {
@@ -219,11 +242,11 @@ export class Serializer {
                     break;
                 case 't':
                 case 'NTransistor':
-                    (comp as TransistorComponent).isPNP = false;
+                    (comp as TransistorComponent).pnp = 1;
                     if (attrs.beta) (comp as TransistorComponent).beta = parseFloat(attrs.beta);
                     break;
                 case 'PTransistor':
-                    (comp as TransistorComponent).isPNP = true;
+                    (comp as TransistorComponent).pnp = -1;
                     if (attrs.beta) (comp as TransistorComponent).beta = parseFloat(attrs.beta);
                     break;
             }

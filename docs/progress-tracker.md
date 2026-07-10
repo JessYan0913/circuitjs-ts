@@ -9,17 +9,17 @@
 ## 全局概览
 
 ```
-██ 完成 ████████████░░░░░░ 45% 核心元件  (91/96+ 元件)
+██ 完成 ████████████████░░░░ 50% 核心元件  (102/96+ 元件)
 ```
 
 | 指标 | 数值 |
 |------|------|
 | 总模块数 | 19 (模块 0–18) |
-| 已完成模块 | 2 |
-| 进行中模块 | 6 (00, 02, 03, 05, 10, 11) |
+| 已完成模块 | 3 |
+| 进行中模块 | 5 (00, 02, 03, 05, 10) |
 | 未开始模块 | 12 |
-| 已实现元件 | 91 / 96+ |
-| 序列化支持 | 91 / 96+ |
+| 已实现元件 | 102 / 96+ |
+| 序列化支持 | 102 / 96+ |
 
 ---
 
@@ -42,7 +42,7 @@
 | 模块 4 — 半导体 | `████████████░░░░ 50%` | 🔄 进行中 | 18 | 36 |
 | 模块 5 — 数字逻辑 | `████████████████░░░░ 76%` | 🔄 进行中 | 34 | 45 |
 | 模块 6 — 变压器/机电 | `████████████████████ 100%` | ✅ 已完成 | 12 | 12 |
-| 模块 7 — 测量与显示 | `░░░░░░░░░░░░░░ 7%` | ⏳ 待开始 | 1 | 13 |
+| 模块 7 — 测量与显示 | `████████████████████ 92%` | ✅ 已完成 | 12 | 13 |
 
 ### 第三阶段：UI 和交互系统 (P2)
 
@@ -88,7 +88,18 @@
 | MBB Switch | `416` | `MBBSwitchComponent.ts` | ✅ |
 | Fuse | `404` | `FuseComponent.ts` | ✅ |
 | Box | `b` | `BoxComponent.ts` | ✅ |
-| Output | `o` | `OutputComponent.ts` | ✅ |
+| Output | `O` (79) | `OutputComponent.ts` | ✅ |
+| Text | `x` (120) | `TextElm.ts` | ✅ |
+| LabeledNode | `207` | `LabeledNodeElm.ts` | ✅ |
+| Probe | `p` (112) | `ProbeElm.ts` | ✅ |
+| Ammeter | `370` | `AmmeterElm.ts` | ✅ |
+| OhmMeter | `216` | `OhmMeterElm.ts` | ✅ |
+| AudioOutput | `211` | `AudioOutputElm.ts` | ✅ |
+| TestPoint | `368` | `TestPointElm.ts` | ✅ |
+| PhaseComp | `161` | `PhaseCompElm.ts` | ✅ |
+| DataRecorder | `210` | `DataRecorderElm.ts` | ✅ |
+| StopTrigger | `408` | `StopTriggerElm.ts` | ✅ |
+| AudioInput | `411` | `AudioInputElm.ts` | ✅ |
 | DC Voltage | `v` | `DCVoltageComponent.ts` | ✅ |
 | Rail | `R` | `RailComponent.ts` | ✅ |
 | Current Source | `i` | `CurrentComponent.ts` | ✅ |

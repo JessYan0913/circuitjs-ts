@@ -11,18 +11,18 @@
 | 元件 | dump type | Java type | 状态 | 说明 |
 |------|-----------|-----------|------|------|
 | `OutputElm.java` | `o` | 字符 `'O'` | ✅ | 输出节点标签（已实现为 OutputComponent） |
-| `ProbeElm.java` | `probe` | 字符 `'p'` | ❌ | 电压探针（可关联 Scope） |
-| `AmmeterElm.java` | `a` | 370 | ❌ | 电流表（串联显示电流值） |
-| `OhmMeterElm.java` | `ohm` | 216 | ❌ | 欧姆表 |
-| `TestPointElm.java` | `tp` | 368 | ❌ | 测试点 |
+| `ProbeElm.java` | `probe` | 字符 `'p'` | ✅ | 电压探针（可关联 Scope） |
+| `AmmeterElm.java` | `a` | 370 | ✅ | 电流表（串联显示电流值） |
+| `OhmMeterElm.java` | `ohm` | 216 | ✅ | 欧姆表 |
+| `TestPointElm.java` | `tp` | 368 | ✅ | 测试点 |
 | `ScopeElm.java` | `scope` | 403 | ❌ | 内嵌示波器元件 |
-| `PhaseCompElm.java` | `pc` | 161 | ❌ | 相位比较器 |
-| `DataRecorderElm.java` | `rec` | 210 | ❌ | 数据记录器 |
-| `StopTriggerElm.java` | `st` | 408 | ❌ | 触发停止仿真 |
-| `TextElm.java` | `text` | 字符 `'x'` | ❌ | 文本标注 |
-| `LabeledNodeElm.java` | `label` | 207 | ❌ | 命名节点（带标签） |
-| `AudioOutputElm.java` | `audio` | 211 | ❌ | 音频输出（Web Audio API） |
-| `AudioInputElm.java` | `aIn` | 411 | ❌ | 音频输入 |
+| `PhaseCompElm.java` | `pc` | 161 | ✅ | 相位比较器 |
+| `DataRecorderElm.java` | `rec` | 210 | ✅ | 数据记录器 |
+| `StopTriggerElm.java` | `st` | 408 | ✅ | 触发停止仿真 |
+| `TextElm.java` | `text` | 字符 `'x'` | ✅ | 文本标注 |
+| `LabeledNodeElm.java` | `label` | 207 | ✅ | 命名节点（带标签） |
+| `AudioOutputElm.java` | `audio` | 211 | ✅ | 音频输出（Web Audio API） |
+| `AudioInputElm.java` | `aIn` | 411 | ✅ | 音频输入 |
 
 ---
 
