@@ -1,0 +1,30 @@
+{
+    "name": "circuitjs-next",
+    "private": true,
+    "workspaces": [
+        "packages/shared",
+        "packages/core",
+        "packages/cli",
+        "packages/mcp-server",
+        "packages/ui",
+        "packages/electron"
+    ],
+    "scripts": {
+        "build:shared": "npm -w packages/shared run build",
+        "build:core": "npm -w packages/core run build",
+        "build:cli": "npm -w packages/cli run build",
+        "build:ui": "npm -w packages/ui run build",
+        "build:mcp": "npm -w packages/mcp-server run build",
+        "build": "npm run build:shared && npm run build:core && npm run build:cli && npm run build:mcp && npm run build:ui",
+        "dev:core": "npm -w packages/core run dev",
+        "dev:ui": "npm -w packages/ui run dev",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "clean": "npm -w packages/shared run clean && npm -w packages/core run clean && npm -w packages/cli run clean && npm -w packages/mcp-server run clean && npm -w packages/ui run clean"
+    },
+    "devDependencies": {
+        "typescript": "^5.7.0",
+        "vitest": "^3.0.0",
+        "@types/node": "^22.0.0"
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "name": "@circuitjs/cli",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "bin": {
+        "circuitjs": "dist/index.js"
+    },
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@circuitjs/core": "*",
+        "@circuitjs/shared": "*",
+        "commander": "^13.0.0"
+    }
+}
