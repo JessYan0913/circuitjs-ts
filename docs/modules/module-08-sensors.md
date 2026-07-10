@@ -10,10 +10,10 @@
 
 | 元件 | dump type | Java type | 状态 | 说明 |
 |------|-----------|-----------|------|------|
-| `PotElm.java` | `pot` | 174 | ❌ | 电位器（3 端，可拖动滑块百分比，实现 `Adjustable`） |
-| `ThermistorNTCElm.java` | `therm` | 350 | ❌ | NTC 热敏电阻（温度→电阻变化） |
-| `LDRElm.java` | `ldr` | 374 | ❌ | 光敏电阻（照度→电阻变化） |
-| `MemristorElm.java` | `mem` | 字符 `'m'` | ❌ | 忆阻器（电荷记忆电阻） |
+| `PotElm.java` | `pot` | 174 | ✅ | 电位器（3 端，可拖动滑块百分比，实现 `Adjustable`） |
+| `ThermistorNTCElm.java` | `therm` | 350 | ✅ | NTC 热敏电阻（温度→电阻变化） |
+| `LDRElm.java` | `ldr` | 374 | ✅ | 光敏电阻（照度→电阻变化） |
+| `MemristorElm.java` | `mem` | 字符 `'m'` | ✅ | 忆阻器（电荷记忆电阻） |
 
 ---
 

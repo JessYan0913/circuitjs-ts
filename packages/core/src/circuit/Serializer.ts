@@ -36,6 +36,10 @@ import { PhaseCompElm } from '../components/measurement/PhaseCompElm.js';
 import { DataRecorderElm } from '../components/measurement/DataRecorderElm.js';
 import { StopTriggerElm } from '../components/measurement/StopTriggerElm.js';
 import { AudioInputElm } from '../components/measurement/AudioInputElm.js';
+import { PotComponent } from '../components/passive/PotComponent.js';
+import { ThermistorComponent } from '../components/passive/ThermistorComponent.js';
+import { LDRComponent } from '../components/passive/LDRComponent.js';
+import { MemristorComponent } from '../components/passive/MemristorComponent.js';
 
 export interface ParsedCircuit {
     header: CircuitHeader;
@@ -98,6 +102,11 @@ const XML_TAG_CLASS: Record<string, ComponentConstructor> = {
     Recorder: DataRecorderElm,
     StopTrigger: StopTriggerElm,
     AudioIn: AudioInputElm,
+    // Sensors & Special Devices (Module 8)
+    pot: PotComponent,
+    therm: ThermistorComponent,
+    ldr: LDRComponent,
+    mem: MemristorComponent,
 };
 
 const DEFAULT_HEADER: CircuitHeader = {

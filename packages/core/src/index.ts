@@ -120,3 +120,9 @@ import './components/measurement/PhaseCompElm.js';
 import './components/measurement/DataRecorderElm.js';
 import './components/measurement/StopTriggerElm.js';
 import './components/measurement/AudioInputElm.js';
+
+// Sensors & Special Devices (Module 8)
+import './components/passive/PotComponent.js';
+import './components/passive/ThermistorComponent.js';
+import './components/passive/LDRComponent.js';
+import './components/passive/MemristorComponent.js';
