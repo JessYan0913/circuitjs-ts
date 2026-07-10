@@ -35,8 +35,8 @@
 
 ### 2.2.1 有极性电容 `PolarCapacitorElm.java`
 
-- [ ] **dump type**: `C`（大写, Java 中 type=209）
-- [ ] **绘制**: 同电容 + 正极标记 `+`
+- [x] **dump type**: `C`（大写, Java 中 type=209）
+- [x] **绘制**: 同电容 + 正极标记 `+`
 
 ---
 
@@ -55,7 +55,7 @@
 ### 待完善
 
 - [ ] **梯形 vs 后向欧拉选项** — 目前固定梯形积分
-- [ ] **初始条件**: dump/load 含初始电流（Java 中 `dump()` 会输出 `current`）
+- [x] **初始条件**: dump/load 含初始电流（Java 中 `dump()` 会输出 `current`）
 
 ---
 
@@ -84,35 +84,35 @@
 
 ### 2.5.2 单刀双掷 `Switch2Elm.java`
 
-- [ ] **dump type**: `S`（大写, Java 中字符代码 `'S'`）
-- [ ] **3 post**: 公共端 + 两个选择端
-- [ ] **dump 额外**: `position`（0 或 1）
+- [x] **dump type**: `S`（大写, Java 中字符代码 `'S'`）
+- [x] **3 post**: 公共端 + 两个选择端
+- [x] **dump 额外**: `position`（0 或 1）
 
 ### 2.5.3 推动开关 `PushSwitchElm.java`
 
-- [ ] **dump type**: `p`（Java 中字符代码 `'p'`，未在 CirSim 中注册）
-- [ ] **交互**: 按下=闭合，松开=断开（momentary）
-- [ ] **绘制**: 推动按钮符号
+- [x] **dump type**: `p`（Java 中字符代码 `'p'`，未在 CirSim 中注册）
+- [x] **交互**: 按下=闭合，松开=断开（momentary）
+- [x] **绘制**: 推动按钮符号
 
 ### 2.5.4 先通后断开关 `MBBSwitchElm.java`
 
-- [ ] **dump type**: `MB`（Java 中 type=416）
-- [ ] Make-Before-Break：切换瞬间两端都连通
+- [x] **dump type**: `MB`（Java 中 type=416）
+- [x] Make-Before-Break：切换瞬间两端都连通
 
 ---
 
 ## 2.6 保险丝 `FuseElm.java`
 
-- [ ] **dump type**: `f`（Java 中 type=404）
-- [ ] **trip 状态**: `blown`，电流超过 `maxCurrent` 熔断
-- [ ] **绘制**: 正常=直线，熔断=断裂
+- [x] **dump type**: `f`（Java 中 type=404）
+- [x] **trip 状态**: `blown`，电流超过 `maxCurrent` 熔断
+- [x] **绘制**: 正常=直线，熔断=断裂
 
 ---
 
 ## 2.7 方框 `BoxElm.java`
 
-- [ ] **dump type**: `b`（Java 中字符代码 `'b'`）
-- [ ] **特性**: 纯图形元件，无电气作用，继承自 `GraphicElm`
+- [x] **dump type**: `b`（Java 中字符代码 `'b'`）
+- [x] **特性**: 纯图形元件，无电气作用，继承自 `GraphicElm`
 
 ---
 
@@ -122,14 +122,14 @@
 |------|---------------|---------|
 | Resistor | `r` | 字符 `'r'` |
 | Capacitor | `c` | 字符 `'c'` |
-| PolarCapacitor | `C` | 209 |
+| PolarCapacitor | `C` (dumps as `209`) | **209** |
 | Inductor | `l` | 字符 `'l'` |
 | Wire | `w` | 字符 `'w'` |
 | Switch (SPST) | `s` | 字符 `'s'` |
 | Switch2 (SPDT) | `S` | 字符 `'S'` |
 | PushSwitch | `p` | 字符 `'p'` |
-| MBB Switch | `MB` | 416 |
-| Fuse | `f` | 404 |
+| MBB Switch | `MB` (dumps as `416`) | **416** |
+| Fuse | `f` (dumps as `404`) | **404** |
 | Box | `b` | 字符 `'b'` |
 
 ---

@@ -9,8 +9,9 @@ import {
 /** SPST Switch (dump type 's') */
 export class SwitchComponent extends CircuitComponent {
     momentary = false;
-    position = 0; // 0=closed, 1=open
-    private posCount = 2;
+    position = 0; // 0=closed, 1=open (subclasses may have more positions)
+    /** Number of valid positions (used by toggle() wrap-around) */
+    posCount = 2;
     private ps = { x: 0, y: 0 };
     private ps2 = { x: 0, y: 0 };
 
@@ -48,9 +49,11 @@ export class SwitchComponent extends CircuitComponent {
 
     getConnection(n1: number, n2: number): boolean { return this.position === 0; }
 
-    /** Toggle switch position (matching Java SwitchElm.toggle) */
+    /** Toggle switch position (matching Java SwitchElm.toggle — increments with posCount wrap) */
     toggle(): void {
-        this.position = this.position === 0 ? 1 : 0;
+        this.position++;
+        if (this.position >= this.posCount)
+            this.position = 0;
     }
 
     getInfo(): string[] {

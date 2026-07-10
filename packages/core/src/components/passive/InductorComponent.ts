@@ -21,9 +21,17 @@ export class InductorComponent extends CircuitComponent {
         if (tokens.length > startIndex) {
             this.inductance = parseFloat(tokens[startIndex]);
         }
+        // Initial current is the 2nd extra parameter (after inductance)
+        if (tokens.length > startIndex + 1) {
+            this.current = parseFloat(tokens[startIndex + 1]);
+        }
     }
 
     getDumpType(): number | string { return 'l'; }
+
+    dump(): string {
+        return super.dump() + ` ${this.inductance} ${this.current}`;
+    }
 
     stamp(context: StampContext): void {
         if (context.timeStep === 0) {

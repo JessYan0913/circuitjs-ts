@@ -13,6 +13,12 @@ import { RailComponent } from '../components/sources/RailComponent.js';
 import { DiodeComponent } from '../components/active/DiodeComponent.js';
 import { TransistorComponent } from '../components/active/TransistorComponent.js';
 import { SwitchComponent } from '../components/passive/SwitchComponent.js';
+import { PolarCapacitorComponent } from '../components/passive/PolarCapacitorComponent.js';
+import { Switch2Component } from '../components/passive/Switch2Component.js';
+import { PushSwitchComponent } from '../components/passive/PushSwitchComponent.js';
+import { MBBSwitchComponent } from '../components/passive/MBBSwitchComponent.js';
+import { FuseComponent } from '../components/passive/FuseComponent.js';
+import { BoxComponent } from '../components/passive/BoxComponent.js';
 
 export interface ParsedCircuit {
     header: CircuitHeader;
@@ -49,6 +55,14 @@ const XML_TAG_CLASS: Record<string, ComponentConstructor> = {
     t: TransistorComponent,
     NTransistor: TransistorComponent,
     PTransistor: TransistorComponent,
+    // New passive components
+    C: PolarCapacitorComponent,
+    SPST: SwitchComponent,        // push switch as SPST
+    p: PushSwitchComponent,
+    SPDT: Switch2Component,
+    MB: MBBSwitchComponent,
+    Fuse: FuseComponent,
+    b: BoxComponent,
 };
 
 const DEFAULT_HEADER: CircuitHeader = {

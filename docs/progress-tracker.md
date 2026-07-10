@@ -9,7 +9,7 @@
 ## 全局概览
 
 ```
-██ 完成 ██░░░░░░░░░░░░ 12% 核心元件  (12/90+ 元件)
+██ 完成 ████░░░░░░░░░░ 18% 核心元件  (18/96+ 元件)
 ```
 
 | 指标 | 数值 |
@@ -18,8 +18,8 @@
 | 已完成模块 | 1 |
 | 进行中模块 | 4 (00, 02, 03, 10, 11) |
 | 未开始模块 | 13 |
-| 已实现元件 | 12 / 90+ |
-| 序列化支持 | 12 / 90+ |
+| 已实现元件 | 18 / 96+ |
+| 序列化支持 | 18 / 96+ |
 
 ---
 
@@ -31,7 +31,7 @@
 |------|------|------|--------|------|
 | 模块 0 — 基础层 | `████████████░░░░ 70%` | ✅ 已完成 | 23 | 23 (另有 21 项 Java 对照补全程待后续迭代) |
 | 模块 1 — MNA 求解器 | `████████████████████ 100%` | ✅ 已完成 | 12 | 12 |
-| 模块 2 — 无源元件 | `████░░░░░░░░░░ 12%` | 🔄 进行中 | 5 | 42 |
+| 模块 2 — 无源元件 | `██████░░░░░░░░ 26%` | 🔄 进行中 | 11 | 42 |
 | 模块 3 — 电源与信号源 | `██░░░░░░░░░░░░ 13%` | 🔄 进行中 | 4 | 30 |
 | 模块 9 — 序列化 | `████░░░░░░░░░░ 36%` | 🔄 进行中 | 4 | 11 |
 
@@ -73,7 +73,7 @@
 
 ## 元件注册表进度
 
-当前注册 12 个元件，目标 90+。
+当前注册 18 个元件，目标 90+。
 
 | 元件 | dumpId | 文件 | 状态 |
 |------|--------|------|------|
@@ -81,7 +81,13 @@
 | Capacitor | `c` | `CapacitorComponent.ts` | ✅ |
 | Inductor | `l` | `InductorComponent.ts` | ✅ |
 | Wire | `w` | `WireComponent.ts` | ✅ |
-| Switch | `s` | `SwitchComponent.ts` | ✅ |
+| Switch (SPST) | `s` | `SwitchComponent.ts` | ✅ |
+| Polarized Cap | `209` | `PolarCapacitorComponent.ts` | ✅ |
+| Switch2 (SPDT) | `S` | `Switch2Component.ts` | ✅ |
+| Push Switch | `p` | `PushSwitchComponent.ts` | ✅ |
+| MBB Switch | `416` | `MBBSwitchComponent.ts` | ✅ |
+| Fuse | `404` | `FuseComponent.ts` | ✅ |
+| Box | `b` | `BoxComponent.ts` | ✅ |
 | Output | `o` | `OutputComponent.ts` | ✅ |
 | DC Voltage | `v` | `DCVoltageComponent.ts` | ✅ |
 | Rail | `V` | `RailComponent.ts` | ✅ |
