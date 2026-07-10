@@ -37,8 +37,7 @@ export interface CircuitNodeLink {
 
 export enum RowType {
     ROW_NORMAL = 0,
-    ROW_CONST = 1,
-    ROW_CURRENT = 2,
+    ROW_CONST  = 1,
 }
 
 export interface RowInfo {
@@ -68,6 +67,7 @@ export interface StampContext {
     setConverged(value: boolean): void;
     timeStep: number;
     converged: boolean;
+    integrationMethod: 'trapezoidal' | 'backwardEuler';
 }
 
 // ---------- Component Interface ----------

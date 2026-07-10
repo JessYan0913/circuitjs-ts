@@ -10,6 +10,8 @@ export class CapacitorComponent extends CircuitComponent {
     capacitance = 1e-6;
     compResistance = 0;
     curSourceValue = 0;
+    /** Matches Java FLAG_BACK_EULER: true when using trapezoidal integration */
+    private useTrapezoidal = true;
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
@@ -28,7 +30,13 @@ export class CapacitorComponent extends CircuitComponent {
             context.stampResistor(this.nodes[0], this.nodes[1], 1e8);
             return;
         }
-        this.compResistance = context.timeStep / (2 * this.capacitance);
+        // Companion model: trapezoidal or backward Euler (Norton equivalent)
+        this.useTrapezoidal = context.integrationMethod !== 'backwardEuler';
+        if (this.useTrapezoidal) {
+            this.compResistance = context.timeStep / (2 * this.capacitance);
+        } else {
+            this.compResistance = context.timeStep / this.capacitance;
+        }
         context.stampResistor(this.nodes[0], this.nodes[1], this.compResistance);
         context.markRightSideChanging(this.nodes[0]);
         context.markRightSideChanging(this.nodes[1]);
@@ -36,7 +44,13 @@ export class CapacitorComponent extends CircuitComponent {
 
     startIteration(): void {
         if (this.compResistance > 0) {
-            this.curSourceValue = -this.volts[0] / this.compResistance - this.current;
+            const vd = this.volts[0] - this.volts[1];
+            if (this.useTrapezoidal) {
+                this.curSourceValue = -vd / this.compResistance - this.current;
+            } else {
+                // Backward Euler: no current term (matches Java CapacitorElm)
+                this.curSourceValue = -vd / this.compResistance;
+            }
         }
     }
 

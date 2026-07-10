@@ -2,20 +2,20 @@ import { CircuitComponent } from '../base/CircuitComponent.js';
 import type { StampContext } from '@circuitjs/shared';
 import { registerComponent } from '../registry.js';
 
-/** Wire — 0V voltage source to enforce equal node voltages and provide MNA current */
+/** Wire — Equal-voltage connection. No MNA stamp; nodes are merged via Union-Find.
+    Matches Java WireElm where stamp() and getVoltageSourceCount() are removed. */
 export class WireComponent extends CircuitComponent {
     getDumpType(): number | string { return 'w'; }
 
-    stamp(context: StampContext): void {
-        context.stampVoltageSource(this.nodes[0], this.nodes[1], this.voltSource, 0);
+    stamp(_context: StampContext): void {
+        // Wire nodes are merged in the matrix via Union-Find (SimulationManager).
+        // No stamp needed. Matches Java WireElm where stamp() is a no-op.
     }
-
-    getVoltageSourceCount(): number { return 1; }
 
     isWire(): boolean { return true; }
 
     calculateCurrent(): void {
-        // current is set by applySolvedVoltages via VS row readback
+        // Wire current is set by calcWireCurrents() from neighbor currents.
     }
 
     getInfo(): string[] {

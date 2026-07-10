@@ -9,6 +9,7 @@ export class StampContextImpl {
         public matrix: MNAMatrix,
         public timeStep: number,
         public converged: boolean,
+        public integrationMethod: 'trapezoidal' | 'backwardEuler' = 'trapezoidal',
     ) {}
 
     setConverged(value: boolean): void { this.converged = value; }

@@ -465,6 +465,21 @@ export abstract class CircuitComponent {
         if (n === 1) return this.point2;
         return { x: 0, y: 0 };
     }
+    /** Find terminal index connected to point (xp, yp). Matches Java CircuitElm.getNodeAtPoint */
+    getNodeAtPoint(xp: number, yp: number): number {
+        if (this.getPostCount() === 2)
+            return (this.x === xp && this.y === yp) ? 0 : 1;
+        for (let i = 0; i < this.getPostCount(); i++) {
+            const p = this.getPost(i);
+            if (p.x === xp && p.y === yp) return i;
+        }
+        return 0;
+    }
+    /** Current flowing into terminal n. Matches Java CircuitElm.getCurrentIntoNode */
+    getCurrentIntoNode(n: number): number {
+        if (n === 0 && this.getPostCount() === 2) return -this.current;
+        return this.current;
+    }
     getVoltageDiff(): number { return this.volts[0] - this.volts[1]; }
     getPower(): number { return this.getVoltageDiff() * this.current; }
 

@@ -10,6 +10,8 @@ export class InductorComponent extends CircuitComponent {
     inductance = 1e-3;
     compResistance = 0;
     curSourceValue = 0;
+    /** Matches Java Inductor.FLAG_BACK_EULER: true when using trapezoidal integration */
+    private useTrapezoidal = true;
 
     constructor(args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) {
         super(args);
@@ -28,7 +30,13 @@ export class InductorComponent extends CircuitComponent {
             context.stampVoltageSource(this.nodes[0], this.nodes[1], this.voltSource, 0);
             return;
         }
-        this.compResistance = 2 * this.inductance / context.timeStep;
+        // Companion model: trapezoidal or backward Euler (Norton equivalent)
+        this.useTrapezoidal = context.integrationMethod !== 'backwardEuler';
+        if (this.useTrapezoidal) {
+            this.compResistance = 2 * this.inductance / context.timeStep;
+        } else {
+            this.compResistance = this.inductance / context.timeStep;
+        }
         context.stampResistor(this.nodes[0], this.nodes[1], this.compResistance);
         context.markRightSideChanging(this.nodes[0]);
         context.markRightSideChanging(this.nodes[1]);
@@ -36,7 +44,13 @@ export class InductorComponent extends CircuitComponent {
 
     startIteration(): void {
         if (this.compResistance > 0) {
-            this.curSourceValue = (this.volts[0] - this.volts[1]) / this.compResistance + this.current;
+            const vd = this.volts[0] - this.volts[1];
+            if (this.useTrapezoidal) {
+                this.curSourceValue = vd / this.compResistance + this.current;
+            } else {
+                // Backward Euler: just the previous current (matches Java Inductor)
+                this.curSourceValue = this.current;
+            }
         }
     }
 

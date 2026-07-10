@@ -2,6 +2,14 @@ import { MNAMatrix } from '../matrix/MNAMatrix.js';
 import { CircuitComponent } from '../components/base/CircuitComponent.js';
 import { StampContextImpl } from './StampContextImpl.js';
 
+/** One half of a wire: the neighbor list we use to calculate wire current.
+    Matches Java CirSim.WireInfo. */
+interface WireInfo {
+    wire: CircuitComponent;
+    neighbors: CircuitComponent[];
+    post: number; // 0 or 1 — which post we have neighbor info for
+}
+
 export interface SimulationConfig {
     maxTimeStep: number;
     minTimeStep: number;
@@ -42,6 +50,9 @@ export class SimulationManager {
     // Voltage source tracking
     private voltageSources: CircuitComponent[] = [];
 
+    // Wire tracking (Union-Find optimization — wires don't use VS rows, matched Java)
+    private wireInfoList: WireInfo[] = [];
+
     constructor(config?: Partial<SimulationConfig>) {
         this.config = { ...DEFAULT_CONFIG, ...config };
     }
@@ -70,11 +81,13 @@ export class SimulationManager {
     analyzeCircuit(): boolean {
         this.stopMessage = null;
 
-        // Count voltage sources
+        // Count voltage sources (wires are handled by Union-Find, not VS rows)
         this.voltageSourceCount = 0;
         for (const c of this.components) {
             c.voltSource = -1;
-            this.voltageSourceCount += c.getVoltageSourceCount();
+            if (!c.isWire()) {
+                this.voltageSourceCount += c.getVoltageSourceCount();
+            }
         }
 
         // Count nodes: each component's posts reference circuit nodes
@@ -102,10 +115,11 @@ export class SimulationManager {
             if (c.nonLinear()) this.circuitNonLinear = true;
         }
 
-        // Allocate voltage sources
+        // Allocate voltage sources (skip wires — Union-Find handles them)
         let vsCount = 0;
         this.voltageSources = [];
         for (const c of this.components) {
+            if (c.isWire()) continue;
             const vsc = c.getVoltageSourceCount();
             for (let j = 0; j < vsc; j++) {
                 c.setVoltageSource?.(j, vsCount);
@@ -121,8 +135,9 @@ export class SimulationManager {
         this.ctx = new StampContextImpl(this.matrix, this.config.timeStep, true);
         this.matrix.circuitNonLinear = this.circuitNonLinear;
 
-        // Stamp all components
+        // Stamp all components (skip wires; they are handled by Union-Find)
         for (const c of this.components) {
+            if (c.isWire()) continue;
             c.simTime = this.t;
             c.stamp(this.ctx);
         }
@@ -167,46 +182,121 @@ export class SimulationManager {
         this.lastNodeVoltages = new Float64Array(this.nodeCount);
         this.saveNodeVoltages();
 
+        // Build wire neighbor lists for current calculation
+        this.buildWireNeighbors();
+
         return true;
     }
 
-    /** Assign node numbers: same (x,y) gets same node number */
-    private assignNodeNumbers(): void {
-        // Coordinate-based node assignment (matching circuitjs1's makeNodeList).
-        // Each unique (x,y) gets one circuit node. Wires use 0V voltage-source
-        // stamps to enforce equal voltages and provide their MNA branch current.
-        //
-        // Ground components: the endpoint coordinate maps to node 0 (reference).
-        const pointMap = new Map<string, number>();
+    /**
+     * Build neighbor lists for wire current calculation.
+     * For each wire, find which other components are connected to its endpoints
+     * (matched by post coordinates). Neighbor currents are summed to determine
+     * wire current. Matches Java calcWireInfo().
+     */
+    private buildWireNeighbors(): void {
+        for (const wi of this.wireInfoList) {
+            const wire = wi.wire;
+            const p0 = wire.getPost(0);
+            const p1 = wire.getPost(1);
 
-        // Pre-assign ground endpoints to node 0
+            const neighbors0: CircuitComponent[] = [];
+            const neighbors1: CircuitComponent[] = [];
+
+            for (const c of this.components) {
+                if (c === wire || c.isWire()) continue;
+                for (let j = 0; j < c.getPostCount(); j++) {
+                    const cp = c.getPost(j);
+                    if (cp.x === p0.x && cp.y === p0.y) {
+                        neighbors0.push(c);
+                    } else if (cp.x === p1.x && cp.y === p1.y) {
+                        neighbors1.push(c);
+                    }
+                }
+            }
+
+            // Pick the post with known neighbors (prefer post 0 if both available)
+            if (neighbors0.length > 0) {
+                wi.neighbors = neighbors0;
+                wi.post = 0;
+            } else {
+                wi.neighbors = neighbors1;
+                wi.post = 1;
+            }
+        }
+    }
+
+    /** Assign node numbers using Union-Find for wire-connected coordinates.
+        Matches Java CirSim.calculateWireClosure() + makeNodeList(). */
+    private assignNodeNumbers(): void {
+        // Union-Find: merge wire-connected posts into the same set
+        const uf = new Map<string, string>();
+        const find = (k: string): string => {
+            let p = uf.get(k);
+            if (p === undefined) { uf.set(k, k); return k; }
+            while (p !== uf.get(p)) {
+                uf.set(p, uf.get(uf.get(p)!)!);
+                p = uf.get(p)!;
+            }
+            uf.set(k, p);
+            return p;
+        };
+        const union = (a: string, b: string): void => {
+            const ra = find(a), rb = find(b);
+            if (ra !== rb) uf.set(ra, rb);
+        };
+
+        // Register all post coordinates and build wireInfoList
+        this.wireInfoList = [];
         for (const c of this.components) {
-            if (c.getDumpType() !== 'g') continue;
             c.setPoints();
-            const pt = c.getPost(0);
-            pointMap.set(`${pt.x},${pt.y}`, 0);
+            for (let j = 0; j < c.getPostCount(); j++) {
+                const pt = c.getPost(j);
+                find(`${pt.x},${pt.y}`);
+            }
+            if (c.isWire()) {
+                this.wireInfoList.push({ wire: c, neighbors: [], post: 0 });
+            }
         }
 
-        let nextNode = 1; // node 0 is ground
+        // Merge wire-connected nodes (like Java calculateWireClosure)
+        for (const c of this.components) {
+            if (c.isWire() && c.getPostCount() >= 2) {
+                const p1 = c.getPost(0);
+                const p2 = c.getPost(1);
+                union(`${p1.x},${p1.y}`, `${p2.x},${p2.y}`);
+            }
+        }
 
+        // Ground: map GroundElm's post root to node 0
+        const rootToNode = new Map<string, number>();
+        for (const c of this.components) {
+            if (c.getDumpType() !== 'g') continue;
+            const pt = c.getPost(0);
+            const root = find(`${pt.x},${pt.y}`);
+            rootToNode.set(root, 0);
+        }
+
+        // Assign node numbers
+        let nextNode = 1;
         for (const c of this.components) {
             c.setPoints();
             const pc = c.getPostCount();
-            const newNodes = new Int32Array(pc + c.getInternalNodeCount());
+            const ic = c.getInternalNodeCount();
+            const newNodes = new Int32Array(pc + ic);
 
             for (let j = 0; j < pc; j++) {
                 const pt = c.getPost(j);
-                const key = `${pt.x},${pt.y}`;
-                let n = pointMap.get(key);
+                const root = find(`${pt.x},${pt.y}`);
+                let n = rootToNode.get(root);
                 if (n === undefined) {
                     n = nextNode++;
-                    pointMap.set(key, n);
+                    rootToNode.set(root, n);
                 }
                 newNodes[j] = n;
             }
 
-            const inodes = c.getInternalNodeCount();
-            for (let j = 0; j < inodes; j++) {
+            for (let j = 0; j < ic; j++) {
                 newNodes[pc + j] = nextNode++;
             }
 
@@ -257,8 +347,9 @@ export class SimulationManager {
             this.reStamp();
         }
 
-        // Start iteration: companion model pre-computation
+        // Start iteration: companion model pre-computation (skip wires — Union-Find)
         for (const c of this.components) {
+            if (c.isWire()) continue;
             c.simTime = this.t;
             c.startIteration();
         }
@@ -271,9 +362,25 @@ export class SimulationManager {
             // Reset matrix to original
             this.matrix.resetToOrig();
 
-            // Do step for all components (nonlinear elements update their contributions)
+            // Do step for all components (skip wires — Union-Find).
+            // Nonlinear elements update their contributions and check convergence.
             for (const c of this.components) {
+                if (c.isWire()) continue;
                 c.doStep(this.ctx);
+            }
+
+            // NaN/Infinity check (matches Java CirSim lines 2680-2688)
+            if (this.stopMessage) return;
+            const d = this.matrix.data;
+            const sz = this.matrix.size;
+            for (let j = 0; j < sz; j++) {
+                for (let i = 0; i < sz; i++) {
+                    const x = d[i * sz + j];
+                    if (isNaN(x) || !isFinite(x)) {
+                        this.stopMessage = 'nan/infinite matrix!';
+                        return;
+                    }
+                }
             }
 
             // Solve
@@ -313,8 +420,11 @@ export class SimulationManager {
 
         // Post-step
         for (const c of this.components) {
+            if (c.isWire()) continue;
             c.stepFinished();
         }
+        // Calculate wire currents (needed for display; wires have no VS row)
+        this.calcWireCurrents();
 
         // Save node voltages for potential rollback
         this.saveNodeVoltages();
@@ -344,6 +454,7 @@ export class SimulationManager {
         this.matrix.circuitNonLinear = this.circuitNonLinear;
 
         for (const c of this.components) {
+            if (c.isWire()) continue;
             c.stamp(this.ctx);
         }
 
@@ -370,7 +481,8 @@ export class SimulationManager {
         }
     }
 
-    /** Copy solved rightSide vector back to component node voltages and VS currents */
+    /** Copy solved rightSide vector back to component node voltages and VS currents.
+        After this, wire currents are stale — call calcWireCurrents() to update them. */
     private applySolvedVoltages(): void {
         const n = this.matrix.rightSide.length;
         const nodeCount = this.nodeCount;
@@ -435,6 +547,25 @@ export class SimulationManager {
                 }
             }
             c.calculateCurrent();
+        }
+    }
+
+    /**
+     * Calculate wire currents from neighbor element currents.
+     * Since wires don't have MNA voltage source rows (Union-Find), we need to
+     * compute their currents from surrounding elements. Matches Java calcWireCurrents().
+     */
+    calcWireCurrents(): void {
+        for (const wi of this.wireInfoList) {
+            const wire = wi.wire;
+            let cur = 0;
+            const p = wire.getPost(wi.post);
+            for (const neighbor of wi.neighbors) {
+                const n = neighbor.getNodeAtPoint(p.x, p.y);
+                cur += neighbor.getCurrentIntoNode(n);
+            }
+            wire.current = (wi.post === 0) ? cur : -cur;
+            wire.curcount = 0; // reset dot position
         }
     }
 

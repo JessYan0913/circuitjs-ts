@@ -50,13 +50,25 @@
 
 ### 待完善确认
 
-- [ ] **`RowInfo.type` 枚举值完全一致**: `ROW_NORMAL=0`, `ROW_CONST=1`, `ROW_CURRENT=2`
-- [ ] **`converged` 阈值确认**: Java 使用 `1e-13` 绝对误差 + `1e-6` 相对误差
-- [ ] **矩阵维度公式**: `circuitMatrixSize = nodeCount + voltSourceCount`（确认 TS 端一致）
-- [ ] **LSETimeout / timeoutCount** — 仿真卡死时的超时退出保护
-- [ ] **梯形积分 vs 后向欧拉切换** — 影响电感和电容的 companion 模型（目前固定梯形）
-- [ ] **`createMatrix()` 完整调用流程** — 何时新建、何时复用
-- [ ] **Wire 闭合优化** — Java CirSim 对 wire 连接进行 Union-Find 优化减少节点数
+| 项目 | 状态 | 说明 |
+|------|------|------|
+| **`RowInfo.type` 枚举值** | ✅ 已确认 | `ROW_NORMAL=0`, `ROW_CONST=1`（Java 无 `ROW_CURRENT`，已移除） |
+| **`converged` 阈值** | ✅ 已确认 | Java CirSim 在 Diode/limitStep 中使用 `0.01` 阈值；无矩阵级 `1e-13`/`1e-6` 检查。已添加 NaN/Infinity 矩阵检查 |
+| **矩阵维度公式** | ✅ 已确认 | `circuitMatrixSize = nodeCount - 1 + voltSourceCount`，TS 端一致 |
+| **LSETimeout / timeoutCount** | ❌ 不存在 | Java 源码中无此机制 | 不对照 |
+| **梯形积分 vs 后向欧拉切换** | ✅ 已实现 | Capacitor/Inductor 均支持 `integrationMethod` 切换（per-component `useTrapezoidal` 标记） |
+| **`createMatrix()` 完整调用流程** | ✅ 已确认 | `analyzeCircuit()` → `stampCircuit()` → `simplifyMatrix()` → LU factor；`reStamp()` 在步长变化时重建 |
+| **Wire 闭合优化** | ✅ 已实现 | Union-Find 合并导线连接的节点；导线不再 stamp 为电压源；电流通过 `calcWireCurrents()` 从邻居元件计算 |
+
+### Java 对照发现的 TS 缺陷修正
+
+| 问题 | 文件 | 修正内容 |
+|------|------|----------|
+| 电容后向欧拉伴随模型公式错误 | CapacitorComponent | 后向欧拉 `curSourceValue = -vd/compResistance`（无 `-current`项） |
+| 电感后向欧拉伴随模型公式错误 | InductorComponent | 后向欧拉 `curSourceValue = current`（无 `vd/compResistance`项） |
+| 导线作为 0V 电压源 stamp | WireComponent → SimulationManager | 改为 Union-Find 合并节点，导线不再 stamp |
+| 缺少 NaN/Infinity 矩阵检查 | SimulationManager | Newton-Raphson 循环中添加矩阵 NaN/Infinity 检查 |
+| `ROW_CURRENT=2` 多余枚举值 | shared/types.ts | 已移除（Java RowInfo 无此值） |
 
 ---
 
