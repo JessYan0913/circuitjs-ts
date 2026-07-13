@@ -93,7 +93,7 @@ export class Switch2Component extends SwitchComponent {
         return (n1 === 0 && n2 === 1 + this.position) || (n2 === 0 && n1 === 1 + this.position);
     }
 
-    isWire(): boolean { return true; }
+    isWire(): boolean { return false; }
 
     getCurrentIntoNode(n: number): number {
         if (n === 0) return -this.current;

@@ -16,7 +16,7 @@ export class SwitchComponent extends CircuitComponent {
     private ps2 = { x: 0, y: 0 };
 
     getDumpType(): number | string { return 's'; }
-    isWire(): boolean { return this.position === 0; }
+    isWire(): boolean { return false; }
     getVoltageSourceCount(): number { return this.position === 1 ? 0 : 1; }
 
     stamp(context: StampContext): void {
@@ -68,8 +68,7 @@ export class SwitchComponent extends CircuitComponent {
 
     draw(g: Graphics): void {
         const openhs = 16;
-        const hs1 = this.position === 1 ? 0 : 2;
-        const hs2 = this.position === 1 ? openhs : 2;
+        const closed = this.position === 0;
 
         this.calcLeads(32);
         setVoltageColor(g, this.volts[0], this);
@@ -77,15 +76,27 @@ export class SwitchComponent extends CircuitComponent {
         setVoltageColor(g, this.volts[1], this);
         drawThickLinePt(g, this.lead2, this.point2);
 
-        interpPointPerpOut(this.lead1, this.lead2, this.ps, 0, hs1);
-        interpPointPerpOut(this.lead1, this.lead2, this.ps2, 1, hs2);
-
         g.setLineWidth(3);
         g.setColor('#FFFFFF');
-        drawThickLineXY(g, this.ps.x, this.ps.y, this.ps2.x, this.ps2.y);
+
+        if (closed) {
+            // Bridge shape ⊓: two vertical contacts + horizontal arm above wire
+            const hs = 3;
+            interpPointPerpOut(this.lead1, this.lead2, this.ps, 0, hs);
+            interpPointPerpOut(this.lead1, this.lead2, this.ps2, 1, hs);
+            drawThickLineXY(g, this.lead1.x, this.lead1.y, this.ps.x, this.ps.y);
+            drawThickLineXY(g, this.ps.x, this.ps.y, this.ps2.x, this.ps2.y);
+            drawThickLineXY(g, this.ps2.x, this.ps2.y, this.lead2.x, this.lead2.y);
+        } else {
+            // Open: angled arm from lead1 pivot to offset lead2
+            interpPointPerpOut(this.lead1, this.lead2, this.ps, 0, 0);
+            interpPointPerpOut(this.lead1, this.lead2, this.ps2, 1, openhs);
+            drawThickLineXY(g, this.ps.x, this.ps.y, this.ps2.x, this.ps2.y);
+        }
+
         g.setLineWidth(1);
 
-        if (this.position === 0) {
+        if (closed) {
             drawDots(g, this.point1, this.lead1, this.curcount);
             drawDots(g, this.lead2, this.point2, -this.curcount);
         }

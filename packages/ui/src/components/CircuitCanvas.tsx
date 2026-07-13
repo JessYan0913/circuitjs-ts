@@ -79,9 +79,26 @@ export function CircuitCanvas({ onEditComponent, onAddComponentType, onUndoState
                 ctx.restore();
             }
         }
-    }
 
-    // Take undo snapshot
+        // Draw wire being drawn (DRAW_WIRE preview)
+        if (handler) {
+            const wire = handler.getPendingWire();
+            if (wire) {
+                ctx.save();
+                const { ox, oy, scale } = renderer.transform;
+                ctx.translate(ox, oy);
+                ctx.scale(scale, scale);
+                ctx.strokeStyle = '#808080';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(wire.x, wire.y);
+                ctx.lineTo(wire.x2, wire.y2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+    }
     const takeUndoSnapshot = useCallback(() => {
         undoStackRef.current.snapshot(useCircuitStore.getState().components);
         onUndoStateChange?.(undoStackRef.current.canUndo(), undoStackRef.current.canRedo());

@@ -217,6 +217,11 @@ export class InteractionHandler {
         return this.state.dragElm;
     }
 
+    /** Get the wire being drawn during DRAW_WIRE (for rendering preview) */
+    getPendingWire(): CircuitComponent | null {
+        return this.pendingWire;
+    }
+
     /** Open context menu at position (screen coords) */
     private openContextMenu(sx: number, sy: number, component: CircuitComponent | null): void {
         const t = this.renderer().transform;
@@ -250,6 +255,11 @@ export class InteractionHandler {
 
     /** Handle context menu action */
     handleContextAction(action: string, componentId: number | null): void {
+        // Ensure right-clicked component is selected before acting on it
+        if (componentId !== null && !this.state.selected.has(componentId)) {
+            this.clearSelection();
+            this.selectComponent(componentId);
+        }
         switch (action) {
             case 'delete':
                 this.deleteSelected();
@@ -301,10 +311,11 @@ export class InteractionHandler {
             return;
         }
 
-        // Double-click detection on same component → open editor
+        // Double-click detection on same component → open editor (skip for toggleable elements like switches)
         const now = Date.now();
         const clickElm = findClosestHandle(this.components(), gx, gy).elm ?? findComponentAt(this.components(), gx, gy);
-        if (clickElm && clickElm === this.lastClickComponent && now - this.lastClickTime < 300) {
+        const isToggleable = clickElm && typeof (clickElm as any).toggle === 'function';
+        if (!isToggleable && clickElm && clickElm === this.lastClickComponent && now - this.lastClickTime < 300) {
             this.lastClickTime = 0;
             this.lastClickComponent = null;
             this.callbacks.onEditComponent?.(clickElm);
@@ -365,18 +376,21 @@ export class InteractionHandler {
                 // Shift+drag on empty → box select
                 mode = MouseMode.BOX_SELECT;
             } else {
-                // Click on empty → start wire drawing
-                // But first check if we're near a wire midpoint for splitting
+                // Click on empty → clear selection if any, then start wire drawing
+                if (this.state.selected.size > 0) {
+                    this.clearSelection();
+                }
                 const midWire = findMidpoint(comps, gx, gy);
                 if (midWire) {
                     this.callbacks.onUndoSnapshot?.();
                     this.splitWire = midWire;
                     mode = MouseMode.DRAG_MIDPOINT;
                 } else {
-                    // Start wire drawing
+                    // Start wire drawing — snap origin to nearest post
                     mode = MouseMode.DRAW_WIRE;
-                    this.state.wireStartX = snapGrid(gx);
-                    this.state.wireStartY = snapGrid(gy);
+                    const startSnapped = this.snapToPost(snapGrid(gx), snapGrid(gy));
+                    this.state.wireStartX = startSnapped.x;
+                    this.state.wireStartY = startSnapped.y;
                 }
             }
         } else if (mode === MouseMode.ADD_ELM && this.state.addType) {
@@ -431,6 +445,19 @@ export class InteractionHandler {
 
             this.state.dragGridX = snapGrid(gx);
             this.state.dragGridY = snapGrid(gy);
+
+            // Update cursor during drag
+            if (this.callbacks.setCursor) {
+                switch (this.state.mode) {
+                    case MouseMode.DRAW_WIRE:
+                    case MouseMode.ADD_ELM:
+                        this.callbacks.setCursor('crosshair'); break;
+                    case MouseMode.DRAG_ALL:
+                        this.callbacks.setCursor('grabbing'); break;
+                    default:
+                        this.callbacks.setCursor('move'); break;
+                }
+            }
         } else {
             // Hover detection
             const comps = this.components();
@@ -447,7 +474,7 @@ export class InteractionHandler {
                     if (isHandle) this.callbacks.setCursor('pointer');
                     else this.callbacks.setCursor('move');
                 } else if (findMidpoint(comps, gx, gy)) {
-                    this.callbacks.setCursor('crosshair');
+                    this.callbacks.setCursor('col-resize');
                 } else {
                     this.callbacks.setCursor('crosshair');
                 }
@@ -487,7 +514,7 @@ export class InteractionHandler {
         this.splitWire = null;
         this.pendingWire = null;
 
-        this.state.mode = this.state.mode === MouseMode.ADD_ELM ? MouseMode.ADD_ELM : MouseMode.SELECT;
+        this.state.mode = MouseMode.SELECT;
         this.callbacks.onRenderNeeded();
     }
 
@@ -581,7 +608,17 @@ export class InteractionHandler {
                 return true;
 
             case 'Escape':
-                this.clearSelection();
+                if (this.state.mode === MouseMode.DRAW_WIRE) {
+                    this.pendingWire = null;
+                    this.state.dragStarted = false;
+                    this.state.mode = MouseMode.SELECT;
+                } else if (this.state.mode === MouseMode.ADD_ELM) {
+                    this.state.dragElm = null;
+                    this.state.addType = null;
+                    this.state.mode = MouseMode.SELECT;
+                } else {
+                    this.clearSelection();
+                }
                 this.callbacks.onRenderNeeded();
                 return true;
         }
@@ -656,7 +693,22 @@ export class InteractionHandler {
 
     // ---- Wire drawing ----
 
+    private snapToPost(gx: number, gy: number): { x: number, y: number } {
+        const SNAP_R_SQ = 225; // 15px radius
+        let best: { x: number, y: number } | null = null;
+        let bestDist = SNAP_R_SQ;
+        for (const c of this.components()) {
+            for (let j = 0; j < c.getPostCount(); j++) {
+                const pt = c.getPost(j);
+                const d = (pt.x - gx) ** 2 + (pt.y - gy) ** 2;
+                if (d < bestDist) { bestDist = d; best = { x: pt.x, y: pt.y }; }
+            }
+        }
+        return best ?? { x: gx, y: gy };
+    }
+
     private dragDrawWire(gx: number, gy: number): void {
+        const snapped = this.snapToPost(gx, gy);
         if (!this.pendingWire) {
             // Only create wire if we've moved beyond threshold
             const dx = gx - this.state.wireStartX;
@@ -666,12 +718,12 @@ export class InteractionHandler {
             this.pendingWire = new WireComponent({
                 x: this.state.wireStartX,
                 y: this.state.wireStartY,
-                x2: gx,
-                y2: gy,
+                x2: snapped.x,
+                y2: snapped.y,
             });
         } else {
-            this.pendingWire.x2 = gx;
-            this.pendingWire.y2 = gy;
+            this.pendingWire.x2 = snapped.x;
+            this.pendingWire.y2 = snapped.y;
             this.pendingWire.setPoints();
         }
     }
@@ -785,6 +837,7 @@ export class InteractionHandler {
         this.state.selected.clear();
         this.callbacks.onComponentsChanged?.(comps);
         this.callbacks.onTopologyChanged?.();
+        this.callbacks.onRenderNeeded?.();
     }
 
     // ---- Flip ----

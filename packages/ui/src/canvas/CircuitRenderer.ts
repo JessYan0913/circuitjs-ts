@@ -95,14 +95,16 @@ export class CircuitRenderer {
         ctx.fillStyle = getBackground();
         ctx.fillRect(0, 0, width, height);
 
-        // 2. Apply transform
+        // 2. Grid dots (drawn in screen space, before transform)
+        this.drawGrid(ctx, width, height);
+
+        // 3. Apply transform
         ctx.save();
         const { ox, oy, scale } = this.transform;
         ctx.translate(ox, oy);
         ctx.scale(scale, scale);
-
-        // 3. Grid dots
-        this.drawGrid(ctx, width, height);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
 
         // 4. Voltage-colored wires
         this.drawWires(ctx, comps);
@@ -117,19 +119,6 @@ export class CircuitRenderer {
         for (const c of comps) {
             if (c.isWire()) continue;
             c.draw(g);
-        }
-
-        // 6. Draw junction posts for ALL unique component endpoints (matching Java postDrawList)
-        const drawnPosts = new Set<string>();
-        for (const c of comps) {
-            for (let j = 0; j < c.getPostCount(); j++) {
-                const pt = c.getPost(j);
-                const key = `${pt.x},${pt.y}`;
-                if (!drawnPosts.has(key)) {
-                    drawnPosts.add(key);
-                    drawPost(ctx, pt.x, pt.y);
-                }
-            }
         }
 
         // 7. Draw handles (cyan squares at endpoints - matching Java drawHandles)

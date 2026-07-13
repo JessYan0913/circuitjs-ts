@@ -113,7 +113,7 @@ export class MBBSwitchComponent extends SwitchComponent {
                (n2 === 0 && n1 === 1 + this.position / 2);
     }
 
-    isWire(): boolean { return true; }
+    isWire(): boolean { return false; }
 
     getCurrentIntoNode(n: number): number {
         if (n === 0) return -this.currents[0] - this.currents[1];

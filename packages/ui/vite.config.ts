@@ -51,6 +51,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            '@circuitjs/core': path.resolve(__dirname, '../core/src/index.ts'),
         },
         conditions: ['development', 'browser'],
     },

@@ -132,11 +132,8 @@ export function drawThickCircle(g: Graphics, cx: number, cy: number, r: number):
     g.setLineWidth(1);
 }
 
-/** drawPost(g, pt) */
-export function drawPost(g: Graphics, pt: Point): void {
-    g.setColor('#FFFFFF');
-    g.fillOval(pt.x - 3, pt.y - 3, 7, 7);
-}
+/** drawPost — intentionally no-op; all post dots are drawn centrally by CircuitRenderer using postCountMap */
+export function drawPost(_g: Graphics, _pt: Point): void {}
 
 // ---- Drawing utilities (matches Java) ----
 
