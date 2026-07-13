@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './components/App.jsx';
 import './globals.css';
+import './i18n/config.js';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Root element not found');

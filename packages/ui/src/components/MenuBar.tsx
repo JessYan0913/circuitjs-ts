@@ -1,152 +1,153 @@
 import React, { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Languages } from 'lucide-react';
 import { useCircuitStore } from '../store/circuitStore.js';
 
 interface ComponentEntry {
-    label: string;
+    labelKey: string;
     name: string;
 }
 
 const PASSIVE_COMPONENTS: ComponentEntry[] = [
-    { label: 'Resistor', name: 'ResistorElm' },
-    { label: 'Capacitor', name: 'CapacitorElm' },
-    { label: 'Polarized Capacitor', name: 'PolarCapacitorElm' },
-    { label: 'Inductor', name: 'InductorElm' },
-    { label: 'Potentiometer', name: 'PotElm' },
-    { label: 'Lamp', name: 'LampElm' },
-    { label: 'Memristor', name: 'MemristorElm' },
-    { label: 'Thermistor', name: 'ThermistorNTCElm' },
-    { label: 'LDR', name: 'LDRElm' },
-    { label: 'LED', name: 'LEDElm' },
-    { label: 'LED Array', name: 'LEDArrayElm' },
+    { labelKey: 'menu.components.Resistor', name: 'ResistorElm' },
+    { labelKey: 'menu.components.Capacitor', name: 'CapacitorElm' },
+    { labelKey: 'menu.components.Polarized Capacitor', name: 'PolarCapacitorElm' },
+    { labelKey: 'menu.components.Inductor', name: 'InductorElm' },
+    { labelKey: 'menu.components.Potentiometer', name: 'PotElm' },
+    { labelKey: 'menu.components.Lamp', name: 'LampElm' },
+    { labelKey: 'menu.components.Memristor', name: 'MemristorElm' },
+    { labelKey: 'menu.components.Thermistor', name: 'ThermistorNTCElm' },
+    { labelKey: 'menu.components.LDR', name: 'LDRElm' },
+    { labelKey: 'menu.components.LED', name: 'LEDElm' },
+    { labelKey: 'menu.components.LED Array', name: 'LEDArrayElm' },
 ];
 
 const SOURCE_COMPONENTS: ComponentEntry[] = [
-    { label: 'DC Voltage', name: 'DCVoltageElm' },
-    { label: 'AC Voltage', name: 'VoltageElm' },
-    { label: 'Square Wave', name: 'SquareRailElm' },
-    { label: 'Clock', name: 'ClockElm' },
-    { label: 'Variable Voltage', name: 'RailElm' },
-    { label: 'Current Source', name: 'CurrentElm' },
-    { label: 'Sweep', name: 'SweepElm' },
-    { label: 'Noise', name: 'NoiseElm' },
-    { label: 'AM Source', name: 'AMElm' },
-    { label: 'FM Source', name: 'FMElm' },
-    { label: 'Antenna', name: 'AntennaElm' },
-    { label: 'VCO', name: 'VCOElm' },
-    { label: 'Seq Gen', name: 'SeqGenElm' },
-    { label: 'Var. Rail', name: 'VarRailElm' },
-    { label: 'Ground', name: 'GroundElm' },
+    { labelKey: 'menu.components.DC Voltage', name: 'DCVoltageElm' },
+    { labelKey: 'menu.components.AC Voltage', name: 'VoltageElm' },
+    { labelKey: 'menu.components.Square Wave', name: 'SquareRailElm' },
+    { labelKey: 'menu.components.Clock', name: 'ClockElm' },
+    { labelKey: 'menu.components.Variable Voltage', name: 'RailElm' },
+    { labelKey: 'menu.components.Current Source', name: 'CurrentElm' },
+    { labelKey: 'menu.components.Sweep', name: 'SweepElm' },
+    { labelKey: 'menu.components.Noise', name: 'NoiseElm' },
+    { labelKey: 'menu.components.AM Source', name: 'AMElm' },
+    { labelKey: 'menu.components.FM Source', name: 'FMElm' },
+    { labelKey: 'menu.components.Antenna', name: 'AntennaElm' },
+    { labelKey: 'menu.components.VCO', name: 'VCOElm' },
+    { labelKey: 'menu.components.Seq Gen', name: 'SeqGenElm' },
+    { labelKey: 'menu.components.Var. Rail', name: 'VarRailElm' },
+    { labelKey: 'menu.components.Ground', name: 'GroundElm' },
 ];
 
 const OUTPUT_COMPONENTS: ComponentEntry[] = [
-    { label: 'Output', name: 'OutputElm' },
-    { label: 'Probe', name: 'ProbeElm' },
-    { label: 'Ammeter', name: 'AmmeterElm' },
-    { label: 'Ohmmeter', name: 'OhmMeterElm' },
-    { label: 'Test Point', name: 'TestPointElm' },
-    { label: 'Data Recorder', name: 'DataRecorderElm' },
-    { label: 'Audio Output', name: 'AudioOutputElm' },
-    { label: 'Audio Input', name: 'AudioInputElm' },
-    { label: 'Stop Trigger', name: 'StopTriggerElm' },
-    { label: 'Text', name: 'TextElm' },
-    { label: 'Labeled Node', name: 'LabeledNodeElm' },
-    { label: 'Phase Comp', name: 'PhaseCompElm' },
+    { labelKey: 'menu.components.Output', name: 'OutputElm' },
+    { labelKey: 'menu.components.Probe', name: 'ProbeElm' },
+    { labelKey: 'menu.components.Ammeter', name: 'AmmeterElm' },
+    { labelKey: 'menu.components.Ohmmeter', name: 'OhmMeterElm' },
+    { labelKey: 'menu.components.Test Point', name: 'TestPointElm' },
+    { labelKey: 'menu.components.Data Recorder', name: 'DataRecorderElm' },
+    { labelKey: 'menu.components.Audio Output', name: 'AudioOutputElm' },
+    { labelKey: 'menu.components.Audio Input', name: 'AudioInputElm' },
+    { labelKey: 'menu.components.Stop Trigger', name: 'StopTriggerElm' },
+    { labelKey: 'menu.components.Text', name: 'TextElm' },
+    { labelKey: 'menu.components.Labeled Node', name: 'LabeledNodeElm' },
+    { labelKey: 'menu.components.Phase Comp', name: 'PhaseCompElm' },
 ];
 
 const ANALOG_COMPONENTS: ComponentEntry[] = [
-    { label: 'Diode', name: 'DiodeElm' },
-    { label: 'Zener Diode', name: 'ZenerElm' },
-    { label: 'Varactor', name: 'VaractorElm' },
-    { label: 'Tunnel Diode', name: 'TunnelDiodeElm' },
-    { label: 'NPN Transistor', name: 'NTransistorElm' },
-    { label: 'PNP Transistor', name: 'PTransistorElm' },
-    { label: 'NMOS', name: 'NMosfetElm' },
-    { label: 'PMOS', name: 'PMosfetElm' },
-    { label: 'N-JFET', name: 'NJfetElm' },
-    { label: 'P-JFET', name: 'PJfetElm' },
-    { label: 'Op Amp', name: 'OpAmpElm' },
-    { label: 'SCR', name: 'SCRElm' },
-    { label: 'CCCS', name: 'CCCSElm' },
-    { label: 'CCVS', name: 'CCVSElm' },
-    { label: 'VCCS', name: 'VCCSElm' },
-    { label: 'VCVS', name: 'VCVSElm' },
+    { labelKey: 'menu.components.Diode', name: 'DiodeElm' },
+    { labelKey: 'menu.components.Zener Diode', name: 'ZenerElm' },
+    { labelKey: 'menu.components.Varactor', name: 'VaractorElm' },
+    { labelKey: 'menu.components.Tunnel Diode', name: 'TunnelDiodeElm' },
+    { labelKey: 'menu.components.NPN Transistor', name: 'NTransistorElm' },
+    { labelKey: 'menu.components.PNP Transistor', name: 'PTransistorElm' },
+    { labelKey: 'menu.components.NMOS', name: 'NMosfetElm' },
+    { labelKey: 'menu.components.PMOS', name: 'PMosfetElm' },
+    { labelKey: 'menu.components.N-JFET', name: 'NJfetElm' },
+    { labelKey: 'menu.components.P-JFET', name: 'PJfetElm' },
+    { labelKey: 'menu.components.Op Amp', name: 'OpAmpElm' },
+    { labelKey: 'menu.components.SCR', name: 'SCRElm' },
+    { labelKey: 'menu.components.CCCS', name: 'CCCSElm' },
+    { labelKey: 'menu.components.CCVS', name: 'CCVSElm' },
+    { labelKey: 'menu.components.VCCS', name: 'VCCSElm' },
+    { labelKey: 'menu.components.VCVS', name: 'VCVSElm' },
 ];
 
 const LOGIC_COMPONENTS: ComponentEntry[] = [
-    { label: 'Logic Input', name: 'LogicInputElm' },
-    { label: 'Logic Output', name: 'LogicOutputElm' },
-    { label: 'AND Gate', name: 'AndGateElm' },
-    { label: 'NAND Gate', name: 'NandGateElm' },
-    { label: 'OR Gate', name: 'OrGateElm' },
-    { label: 'NOR Gate', name: 'NorGateElm' },
-    { label: 'XOR Gate', name: 'XorGateElm' },
-    { label: 'Inverter', name: 'InverterElm' },
-    { label: 'Schmitt Inverter', name: 'InvertingSchmittElm' },
-    { label: 'Schmitt Trigger', name: 'SchmittElm' },
-    { label: 'Analog Switch', name: 'AnalogSwitchElm' },
-    { label: 'Analog Switch (2)', name: 'AnalogSwitch2Elm' },
-    { label: 'TriState', name: 'TriStateElm' },
-    { label: 'Latch', name: 'LatchElm' },
-    { label: 'D Flip-Flop', name: 'DFlipFlopElm' },
-    { label: 'JK Flip-Flop', name: 'JKFlipFlopElm' },
-    { label: 'T Flip-Flop', name: 'TFlipFlopElm' },
-    { label: 'Monostable', name: 'MonostableElm' },
-    { label: 'Multiplexer', name: 'MultiplexerElm' },
-    { label: 'Demultiplexer', name: 'DeMultiplexerElm' },
-    { label: 'Half Adder', name: 'HalfAdderElm' },
-    { label: 'Full Adder', name: 'FullAdderElm' },
+    { labelKey: 'menu.components.Logic Input', name: 'LogicInputElm' },
+    { labelKey: 'menu.components.Logic Output', name: 'LogicOutputElm' },
+    { labelKey: 'menu.components.AND Gate', name: 'AndGateElm' },
+    { labelKey: 'menu.components.NAND Gate', name: 'NandGateElm' },
+    { labelKey: 'menu.components.OR Gate', name: 'OrGateElm' },
+    { labelKey: 'menu.components.NOR Gate', name: 'NorGateElm' },
+    { labelKey: 'menu.components.XOR Gate', name: 'XorGateElm' },
+    { labelKey: 'menu.components.Inverter', name: 'InverterElm' },
+    { labelKey: 'menu.components.Schmitt Inverter', name: 'InvertingSchmittElm' },
+    { labelKey: 'menu.components.Schmitt Trigger', name: 'SchmittElm' },
+    { labelKey: 'menu.components.Analog Switch', name: 'AnalogSwitchElm' },
+    { labelKey: 'menu.components.Analog Switch (2)', name: 'AnalogSwitch2Elm' },
+    { labelKey: 'menu.components.TriState', name: 'TriStateElm' },
+    { labelKey: 'menu.components.Latch', name: 'LatchElm' },
+    { labelKey: 'menu.components.D Flip-Flop', name: 'DFlipFlopElm' },
+    { labelKey: 'menu.components.JK Flip-Flop', name: 'JKFlipFlopElm' },
+    { labelKey: 'menu.components.T Flip-Flop', name: 'TFlipFlopElm' },
+    { labelKey: 'menu.components.Monostable', name: 'MonostableElm' },
+    { labelKey: 'menu.components.Multiplexer', name: 'MultiplexerElm' },
+    { labelKey: 'menu.components.Demultiplexer', name: 'DeMultiplexerElm' },
+    { labelKey: 'menu.components.Half Adder', name: 'HalfAdderElm' },
+    { labelKey: 'menu.components.Full Adder', name: 'FullAdderElm' },
 ];
 
 const CHIP_COMPONENTS: ComponentEntry[] = [
-    { label: 'Counter', name: 'CounterElm' },
-    { label: 'Ring Counter', name: 'RingCounterElm' },
-    { label: 'ADC', name: 'ADCElm' },
-    { label: 'DAC', name: 'DACElm' },
-    { label: '7-Segment', name: 'SevenSegElm' },
-    { label: '7-Seg Decoder', name: 'SevenSegDecoderElm' },
-    { label: 'SRAM', name: 'SRAMElm' },
-    { label: 'PISO Shift', name: 'PisoShiftElm' },
-    { label: 'SIPO Shift', name: 'SipoShiftElm' },
+    { labelKey: 'menu.components.Counter', name: 'CounterElm' },
+    { labelKey: 'menu.components.Ring Counter', name: 'RingCounterElm' },
+    { labelKey: 'menu.components.ADC', name: 'ADCElm' },
+    { labelKey: 'menu.components.DAC', name: 'DACElm' },
+    { labelKey: 'menu.components.7-Segment', name: 'SevenSegElm' },
+    { labelKey: 'menu.components.7-Seg Decoder', name: 'SevenSegDecoderElm' },
+    { labelKey: 'menu.components.SRAM', name: 'SRAMElm' },
+    { labelKey: 'menu.components.PISO Shift', name: 'PisoShiftElm' },
+    { labelKey: 'menu.components.SIPO Shift', name: 'SipoShiftElm' },
 ];
 
 const TRANSFORMER_COMPONENTS: ComponentEntry[] = [
-    { label: 'Transformer', name: 'TransformerElm' },
-    { label: 'Tapped Transformer', name: 'TappedTransformerElm' },
-    { label: 'Custom Transformer', name: 'CustomTransformerElm' },
-    { label: 'Transmission Line', name: 'TransLineElm' },
-    { label: 'Crystal', name: 'CrystalElm' },
-    { label: 'Relay', name: 'RelayElm' },
-    { label: 'Time Delay Relay', name: 'TimeDelayRelayElm' },
+    { labelKey: 'menu.components.Transformer', name: 'TransformerElm' },
+    { labelKey: 'menu.components.Tapped Transformer', name: 'TappedTransformerElm' },
+    { labelKey: 'menu.components.Custom Transformer', name: 'CustomTransformerElm' },
+    { labelKey: 'menu.components.Transmission Line', name: 'TransLineElm' },
+    { labelKey: 'menu.components.Crystal', name: 'CrystalElm' },
+    { labelKey: 'menu.components.Relay', name: 'RelayElm' },
+    { labelKey: 'menu.components.Time Delay Relay', name: 'TimeDelayRelayElm' },
 ];
 
 const ELECTROMECHANICAL_COMPONENTS: ComponentEntry[] = [
-    { label: 'DC Motor', name: 'DCMotorElm' },
-    { label: 'Fuse', name: 'FuseElm' },
-    { label: 'Spark Gap', name: 'SparkGapElm' },
-    { label: 'Switch', name: 'SwitchElm' },
-    { label: 'SPDT Switch', name: 'Switch2Elm' },
-    { label: 'Push Switch', name: 'MBBSwitchElm' },
-    { label: 'Timer (555)', name: 'TimerElm' },
-    { label: 'Box', name: 'BoxElm' },
-    { label: 'Wire', name: 'WireElm' },
+    { labelKey: 'menu.components.DC Motor', name: 'DCMotorElm' },
+    { labelKey: 'menu.components.Fuse', name: 'FuseElm' },
+    { labelKey: 'menu.components.Spark Gap', name: 'SparkGapElm' },
+    { labelKey: 'menu.components.Switch', name: 'SwitchElm' },
+    { labelKey: 'menu.components.SPDT Switch', name: 'Switch2Elm' },
+    { labelKey: 'menu.components.Push Switch', name: 'MBBSwitchElm' },
+    { labelKey: 'menu.components.Timer (555)', name: 'TimerElm' },
+    { labelKey: 'menu.components.Box', name: 'BoxElm' },
+    { labelKey: 'menu.components.Wire', name: 'WireElm' },
 ];
 
 interface CategoryGroup {
-    label: string;
+    labelKey: string;
     items: ComponentEntry[];
 }
 
 const DRAW_CATEGORIES: CategoryGroup[] = [
-    { label: 'Passive', items: PASSIVE_COMPONENTS },
-    { label: 'Sources', items: SOURCE_COMPONENTS },
-    { label: 'Outputs', items: OUTPUT_COMPONENTS },
-    { label: 'Analog ICs', items: ANALOG_COMPONENTS },
-    { label: 'Logic Gates', items: LOGIC_COMPONENTS },
-    { label: 'Chips', items: CHIP_COMPONENTS },
-    { label: 'Transformers', items: TRANSFORMER_COMPONENTS },
-    { label: 'Electromechanical', items: ELECTROMECHANICAL_COMPONENTS },
+    { labelKey: 'menu.categories.passive', items: PASSIVE_COMPONENTS },
+    { labelKey: 'menu.categories.sources', items: SOURCE_COMPONENTS },
+    { labelKey: 'menu.categories.outputs', items: OUTPUT_COMPONENTS },
+    { labelKey: 'menu.categories.analogIcs', items: ANALOG_COMPONENTS },
+    { labelKey: 'menu.categories.logicGates', items: LOGIC_COMPONENTS },
+    { labelKey: 'menu.categories.chips', items: CHIP_COMPONENTS },
+    { labelKey: 'menu.categories.transformers', items: TRANSFORMER_COMPONENTS },
+    { labelKey: 'menu.categories.electromechanical', items: ELECTROMECHANICAL_COMPONENTS },
 ];
 
 // ─── Radix menu class helpers ─────────────────────────────────────────────
@@ -207,6 +208,7 @@ export function MenuBar({
     running,
     simLoaded,
 }: MenuBarProps) {
+    const { t, i18n } = useTranslation();
     const store = useCircuitStore();
     const canUndo = useCircuitStore((s) => s.canUndo);
     const canRedo = useCircuitStore((s) => s.canRedo);
@@ -226,9 +228,9 @@ export function MenuBar({
 
     function renderComponentSubmenu(cat: CategoryGroup) {
         return (
-            <DropdownMenu.Sub key={cat.label}>
+            <DropdownMenu.Sub key={cat.labelKey}>
                 <DropdownMenu.SubTrigger className={subTriggerClass}>
-                    {cat.label}
+                    {t(cat.labelKey)}
                     <ChevronRight className="ml-auto h-3 w-3 text-circuit-text-dim" />
                 </DropdownMenu.SubTrigger>
                 <DropdownMenu.Portal>
@@ -243,7 +245,7 @@ export function MenuBar({
                                 className={itemClass}
                                 onSelect={() => handleComponentSelect(entry.name)}
                             >
-                                {entry.label}
+                                {t(entry.labelKey)}
                             </DropdownMenu.Item>
                         ))}
                     </DropdownMenu.SubContent>
@@ -291,23 +293,23 @@ export function MenuBar({
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                     <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
-                        File
+                        {t('menu.file')}
                     </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                     <DropdownMenu.Content className={contentClass} sideOffset={0}>
-                        {renderItem('New Circuit', () => onNewCircuit?.())}
-                        {renderItem('Open File...', () => onOpenFile?.())}
+                        {renderItem(t('menu.items.newCircuit'), () => onNewCircuit?.())}
+                        {renderItem(t('menu.items.openFile'), () => onOpenFile?.())}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('Import From Text...', () => onImportText?.())}
+                        {renderItem(t('menu.items.importFromText'), () => onImportText?.())}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('Examples...', () => onShowExamples?.())}
+                        {renderItem(t('menu.items.examples'), () => onShowExamples?.())}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('Export As Text...', () => onExportText?.())}
-                        {renderItem('Export As URL...', () => onExportUrl?.())}
-                        {renderItem('Export As Image...', () => onExportImage?.())}
+                        {renderItem(t('menu.items.exportAsText'), () => onExportText?.())}
+                        {renderItem(t('menu.items.exportAsUrl'), () => onExportUrl?.())}
+                        {renderItem(t('menu.items.exportAsImage'), () => onExportImage?.())}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('About', () => onShowAbout?.())}
+                        {renderItem(t('menu.items.about'), () => onShowAbout?.())}
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>
             </DropdownMenu.Root>
@@ -316,21 +318,21 @@ export function MenuBar({
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                     <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
-                        Edit
+                        {t('menu.edit')}
                     </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                     <DropdownMenu.Content className={contentClass} sideOffset={0}>
-                        {renderItem('Undo', () => onUndo?.(), !canUndo)}
-                        {renderItem('Redo', () => onRedo?.(), !canRedo)}
+                        {renderItem(t('menu.items.undo'), () => onUndo?.(), !canUndo)}
+                        {renderItem(t('menu.items.redo'), () => onRedo?.(), !canRedo)}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('Cut', () => onEditMenuAction?.('cut'), !simLoaded)}
-                        {renderItem('Copy', () => onEditMenuAction?.('copy'), !simLoaded)}
-                        {renderItem('Paste', () => onEditMenuAction?.('paste'), !simLoaded)}
+                        {renderItem(t('menu.items.cut'), () => onEditMenuAction?.('cut'), !simLoaded)}
+                        {renderItem(t('menu.items.copy'), () => onEditMenuAction?.('copy'), !simLoaded)}
+                        {renderItem(t('menu.items.paste'), () => onEditMenuAction?.('paste'), !simLoaded)}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('Select All', () => onEditMenuAction?.('select_all'), !simLoaded)}
-                        {renderItem('Delete', () => onEditMenuAction?.('delete'), !simLoaded)}
-                        {renderItem('Center Circuit', () => store.autoCenter(), !simLoaded)}
+                        {renderItem(t('menu.items.selectAll'), () => onEditMenuAction?.('select_all'), !simLoaded)}
+                        {renderItem(t('menu.items.delete'), () => onEditMenuAction?.('delete'), !simLoaded)}
+                        {renderItem(t('menu.items.centerCircuit'), () => store.autoCenter(), !simLoaded)}
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>
             </DropdownMenu.Root>
@@ -339,7 +341,7 @@ export function MenuBar({
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                     <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
-                        Draw
+                        {t('menu.draw')}
                     </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
@@ -353,13 +355,13 @@ export function MenuBar({
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                     <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
-                        Scope
+                        {t('menu.scope')}
                     </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                     <DropdownMenu.Content className={contentClass} sideOffset={0}>
-                        {renderItem('Add Scope', () => onScopeAction?.('add'), !simLoaded)}
-                        {renderItem('Remove Scope', () => onScopeAction?.('remove'), !simLoaded)}
+                        {renderItem(t('menu.items.addScope'), () => onScopeAction?.('add'), !simLoaded)}
+                        {renderItem(t('menu.items.removeScope'), () => onScopeAction?.('remove'), !simLoaded)}
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>
             </DropdownMenu.Root>
@@ -368,21 +370,21 @@ export function MenuBar({
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                     <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
-                        Options
+                        {t('menu.options')}
                     </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                     <DropdownMenu.Content className={contentClass} sideOffset={0}>
-                        {renderCheckItem('Show Current', showCurrent, () => store.setShowCurrent(!showCurrent))}
-                        {renderCheckItem('Show Voltage', showVoltageLabels, () => store.setShowVoltageLabels(!showVoltageLabels))}
+                        {renderCheckItem(t('menu.items.showCurrent'), showCurrent, () => store.setShowCurrent(!showCurrent))}
+                        {renderCheckItem(t('menu.items.showVoltage'), showVoltageLabels, () => store.setShowVoltageLabels(!showVoltageLabels))}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderCheckItem('Show Values', showValues, () => store.setShowValues(!showValues))}
-                        {renderCheckItem('Small Grid', smallGrid, () => store.setSmallGrid(!smallGrid))}
-                        {renderCheckItem('European Resistors', euroResistors, () => store.setEuroResistors(!euroResistors))}
+                        {renderCheckItem(t('menu.items.showValues'), showValues, () => store.setShowValues(!showValues))}
+                        {renderCheckItem(t('menu.items.smallGrid'), smallGrid, () => store.setSmallGrid(!smallGrid))}
+                        {renderCheckItem(t('menu.items.europeanResistors'), euroResistors, () => store.setEuroResistors(!euroResistors))}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderCheckItem('Show Sliders', showSliders, () => store.setShowSliders(!showSliders))}
+                        {renderCheckItem(t('menu.items.showSliders'), showSliders, () => store.setShowSliders(!showSliders))}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('Keyboard Shortcuts...', () => onShowShortcuts?.())}
+                        {renderItem(t('menu.items.keyboardShortcuts'), () => onShowShortcuts?.())}
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>
             </DropdownMenu.Root>
@@ -391,14 +393,37 @@ export function MenuBar({
             <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
                     <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
-                        Help
+                        {t('menu.help')}
                     </button>
                 </DropdownMenu.Trigger>
                 <DropdownMenu.Portal>
                     <DropdownMenu.Content className={contentClass} sideOffset={0}>
-                        {renderItem('Keyboard Shortcuts...', () => onShowShortcuts?.())}
+                        {renderItem(t('menu.items.keyboardShortcuts'), () => onShowShortcuts?.())}
                         <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
-                        {renderItem('About', () => onShowAbout?.())}
+                        <DropdownMenu.Sub>
+                            <DropdownMenu.SubTrigger className={subTriggerClass}>
+                                {t('menu.language')}
+                                <ChevronRight className="ml-auto h-3 w-3 text-circuit-text-dim" />
+                            </DropdownMenu.SubTrigger>
+                            <DropdownMenu.Portal>
+                                <DropdownMenu.SubContent className={contentClass} sideOffset={4}>
+                                    <DropdownMenu.Item
+                                        className={itemClass}
+                                        onSelect={() => i18n.changeLanguage('en')}
+                                    >
+                                        English {i18n.language?.startsWith('en') ? '✓' : ''}
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Item
+                                        className={itemClass}
+                                        onSelect={() => i18n.changeLanguage('zh-CN')}
+                                    >
+                                        中文 {i18n.language?.startsWith('zh') ? '✓' : ''}
+                                    </DropdownMenu.Item>
+                                </DropdownMenu.SubContent>
+                            </DropdownMenu.Portal>
+                        </DropdownMenu.Sub>
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem(t('menu.items.about'), () => onShowAbout?.())}
                     </DropdownMenu.Content>
                 </DropdownMenu.Portal>
             </DropdownMenu.Root>
@@ -414,7 +439,7 @@ export function MenuBar({
                     disabled={!simLoaded}
                     className="px-2.5 py-0.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-sm h-[22px] disabled:opacity-40"
                 >
-                    {running ? '■ Stop' : '▶ Start'}
+                    {running ? t('menu.items.stop') : t('menu.items.start')}
                 </button>
                 <button
                     onClick={() => {
@@ -426,7 +451,7 @@ export function MenuBar({
                     disabled={!simLoaded || running}
                     className="px-2.5 py-0.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-sm h-[22px] disabled:opacity-40"
                 >
-                    {'⏭'} Step
+                    {t('menu.items.step')}
                 </button>
                 {simLoaded && (
                     <span className="text-circuit-text-muted font-mono text-circuit-sm ml-2">

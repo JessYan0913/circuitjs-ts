@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal.js';
 import { SIDE_W, SIDE_E } from '@circuitjs/core';
 
@@ -24,8 +25,8 @@ const CANVAS_W = 400;
 const CANVAS_H = 300;
 
 const SIDE_LABELS: Record<number, string> = {
-    [SIDE_W]: 'Left',
-    [SIDE_E]: 'Right',
+    [SIDE_W]: 'dialog.editComposite.left',
+    [SIDE_E]: 'dialog.editComposite.right',
 };
 
 export function EditCompositeModelDialog({
@@ -37,6 +38,7 @@ export function EditCompositeModelDialog({
     onSave,
     onClose,
 }: EditCompositeModelDialogProps) {
+    const { t } = useTranslation();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [pins, setPins] = useState<PinEditor[]>(initialPins);
     const [sizeX, setSizeX] = useState(initialSizeX);
@@ -195,7 +197,7 @@ export function EditCompositeModelDialog({
     }, [modelName, pins, sizeX, sizeY, onSave]);
 
     return (
-        <Modal title="Edit Composite Model" onClose={onClose} width={500}>
+        <Modal title={t('dialog.editComposite.title')} onClose={onClose} width={500}>
             <div className="flex flex-col gap-3">
                 {/* Canvas */}
                 <canvas
@@ -213,7 +215,7 @@ export function EditCompositeModelDialog({
                 {/* Model name */}
                 {isNew && (
                     <div className="flex items-center gap-2">
-                        <label className="text-circuit-text-secondary text-circuit-base font-mono min-w-[80px]">Model name:</label>
+                        <label className="text-circuit-text-secondary text-circuit-base font-mono min-w-[80px]">{t('dialog.editComposite.modelName')}</label>
                         <input
                             type="text"
                             value={modelName}
@@ -226,13 +228,13 @@ export function EditCompositeModelDialog({
                 {/* Size controls */}
                 <div className="flex gap-4 items-center">
                     <div className="flex items-center gap-1">
-                        <span className="text-circuit-text-secondary text-circuit-base font-mono">Width:</span>
+                        <span className="text-circuit-text-secondary text-circuit-base font-mono">{t('dialog.editComposite.width')}</span>
                         <button onClick={() => adjustSize(-1, 0)} className="px-3 py-1 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base min-w-[30px]">-</button>
                         <span className="text-circuit-text text-circuit-base font-mono min-w-[20px] text-center">{sizeX}</span>
                         <button onClick={() => adjustSize(1, 0)} className="px-3 py-1 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base min-w-[30px]">+</button>
                     </div>
                     <div className="flex items-center gap-1">
-                        <span className="text-circuit-text-secondary text-circuit-base font-mono">Height:</span>
+                        <span className="text-circuit-text-secondary text-circuit-base font-mono">{t('dialog.editComposite.height')}</span>
                         <button onClick={() => adjustSize(0, -1)} className="px-3 py-1 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base min-w-[30px]">-</button>
                         <span className="text-circuit-text text-circuit-base font-mono min-w-[20px] text-center">{sizeY}</span>
                         <button onClick={() => adjustSize(0, 1)} className="px-3 py-1 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base min-w-[30px]">+</button>
@@ -241,7 +243,7 @@ export function EditCompositeModelDialog({
 
                 {/* Pin list */}
                 <div className="max-h-[150px] overflow-auto border border-circuit-border rounded p-2">
-                    <div className="text-circuit-text-muted text-circuit-sm font-mono mb-1">Pins (click to select, drag to reposition)</div>
+                    <div className="text-circuit-text-muted text-circuit-sm font-mono mb-1">{t('dialog.editComposite.pins')}</div>
                     {pins.map((pin, i) => (
                         <div key={i}
                             className="flex items-center gap-2 py-0.5"
@@ -256,9 +258,9 @@ export function EditCompositeModelDialog({
                             />
                             <button onClick={() => togglePinSide(i)}
                                 className="px-2 py-0.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-sm">
-                                Side: {SIDE_LABELS[pin.side] ?? `${pin.side}`}
+                                {t('dialog.editComposite.side')} {t(SIDE_LABELS[pin.side] ?? `${pin.side}`)}
                             </button>
-                            <span className="text-circuit-text-muted text-circuit-sm font-mono">pos: {pin.pos}</span>
+                            <span className="text-circuit-text-muted text-circuit-sm font-mono">{t('dialog.editComposite.pos', { pos: pin.pos })}</span>
                         </div>
                     ))}
                 </div>
@@ -266,9 +268,9 @@ export function EditCompositeModelDialog({
                 {/* Buttons */}
                 <div className="flex justify-end gap-2 mt-2">
                     <button onClick={handleSave}
-                        className="px-6 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">OK</button>
+                        className="px-6 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">{t('dialog.editComposite.ok')}</button>
                     <button onClick={onClose}
-                        className="px-6 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Cancel</button>
+                        className="px-6 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">{t('dialog.editComposite.cancel')}</button>
                 </div>
             </div>
         </Modal>

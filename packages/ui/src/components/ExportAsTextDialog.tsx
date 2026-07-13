@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal.js';
 import { useCircuitStore } from '../store/circuitStore.js';
 
@@ -7,13 +8,14 @@ export interface ExportAsTextDialogProps {
 }
 
 export function ExportAsTextDialog({ onClose }: ExportAsTextDialogProps) {
+    const { t } = useTranslation();
     const simManager = useCircuitStore((s) => s.simManager);
-    const [circuitText, setCircuitText] = useState('Loading...');
+    const [circuitText, setCircuitText] = useState(t('dialog.exportText.loading'));
 
     useEffect(() => {
         (async () => {
             if (!simManager) {
-                setCircuitText('No circuit loaded.');
+                setCircuitText(t('dialog.exportText.noCircuit'));
                 return;
             }
             try {
@@ -21,10 +23,10 @@ export function ExportAsTextDialog({ onClose }: ExportAsTextDialogProps) {
                 const text = Serializer.dumpCircuit(simManager);
                 setCircuitText(text);
             } catch {
-                setCircuitText('Error generating circuit text.');
+                setCircuitText(t('dialog.exportText.error'));
             }
         })();
-    }, [simManager]);
+    }, [simManager, t]);
 
     const handleCopy = useCallback(async () => {
         try {
@@ -35,10 +37,10 @@ export function ExportAsTextDialog({ onClose }: ExportAsTextDialogProps) {
     }, [circuitText]);
 
     return (
-        <Modal title="Export As Text" onClose={onClose} width={500}>
+        <Modal title={t('dialog.exportText.title')} onClose={onClose} width={500}>
             <div className="font-mono text-circuit-base">
                 <p className="text-circuit-text-muted mb-2">
-                    Copy the circuit data below to share or save:
+                    {t('dialog.exportText.instruction')}
                 </p>
                 <textarea
                     readOnly
@@ -51,13 +53,13 @@ export function ExportAsTextDialog({ onClose }: ExportAsTextDialogProps) {
                         onClick={handleCopy}
                         className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
-                        Copy to Clipboard
+                        {t('dialog.exportText.copyToClipboard')}
                     </button>
                     <button
                         onClick={onClose}
                         className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base"
                     >
-                        Close
+                        {t('dialog.exportText.close')}
                     </button>
                 </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal.js';
 import { useCircuitStore } from '../store/circuitStore.js';
 
@@ -7,6 +8,7 @@ export interface ImportFromTextDialogProps {
 }
 
 export function ImportFromTextDialog({ onClose }: ImportFromTextDialogProps) {
+    const { t } = useTranslation();
     const [text, setText] = useState('');
     const [error, setError] = useState<string | null>(null);
     const setComponents = useCircuitStore((s) => s.setComponents);
@@ -16,21 +18,21 @@ export function ImportFromTextDialog({ onClose }: ImportFromTextDialogProps) {
 
     const handleImport = useCallback(async () => {
         if (!text.trim()) {
-            setError('Please paste circuit data first.');
+            setError(t('dialog.importText.errors.empty'));
             return;
         }
         try {
             const { Serializer, SimulationManager } = await import('@circuitjs/core');
             const { components } = Serializer.parseCircuit(text);
             if (components.length === 0) {
-                setError('No components found in circuit data.');
+                setError(t('dialog.importText.errors.noComponents'));
                 return;
             }
             const sim = new SimulationManager();
             sim.loadComponents(components);
             const ok = sim.analyzeCircuit();
             if (!ok) {
-                setError(`Error: ${sim.stopMessage}`);
+                setError(t('dialog.importText.errors.error', { message: sim.stopMessage }));
                 return;
             }
             setSimManager(sim);
@@ -40,20 +42,20 @@ export function ImportFromTextDialog({ onClose }: ImportFromTextDialogProps) {
             onClose();
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
-            setError(`Import error: ${msg}`);
+            setError(t('dialog.importText.errors.importError', { message: msg }));
         }
-    }, [text, setComponents, setSimManager, storeSetTime, autoCenter, onClose]);
+    }, [text, setComponents, setSimManager, storeSetTime, autoCenter, onClose, t]);
 
     return (
-        <Modal title="Import From Text" onClose={onClose} width={500}>
+        <Modal title={t('dialog.importText.title')} onClose={onClose} width={500}>
             <div className="font-mono text-circuit-base">
                 <p className="text-circuit-text-muted mb-2">
-                    Paste circuit data text below and click Import:
+                    {t('dialog.importText.instruction')}
                 </p>
                 <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    placeholder="Paste circuit data here..."
+                    placeholder={t('dialog.importText.placeholder')}
                     className="w-full h-[300px] bg-circuit-bg-canvas text-circuit-text border border-circuit-border rounded p-2 font-mono text-circuit-sm resize-none box-border"
                 />
                 {error && (
@@ -64,13 +66,13 @@ export function ImportFromTextDialog({ onClose }: ImportFromTextDialogProps) {
                         onClick={handleImport}
                         className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base"
                     >
-                        Import
+                        {t('dialog.importText.import')}
                     </button>
                     <button
                         onClick={onClose}
                         className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
-                        Cancel
+                        {t('dialog.importText.cancel')}
                     </button>
                 </div>
             </div>

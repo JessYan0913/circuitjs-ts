@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal.js';
 
 export interface AboutDialogProps {
@@ -6,26 +7,27 @@ export interface AboutDialogProps {
 }
 
 export function AboutDialog({ onClose }: AboutDialogProps) {
+    const { t } = useTranslation();
     return (
-        <Modal title="About CircuitJS" onClose={onClose} width={400}>
+        <Modal title={t('dialog.about.title')} onClose={onClose} width={400}>
             <div className="font-mono text-circuit-base text-circuit-text-secondary leading-relaxed">
-                <h3 className="text-circuit-text text-circuit-lg font-semibold mb-2">CircuitJS Next</h3>
+                <h3 className="text-circuit-text text-circuit-lg font-semibold mb-2">{t('dialog.about.heading')}</h3>
                 <p className="mb-3">
-                    Circuit simulation in your browser.
+                    {t('dialog.about.description')}
                 </p>
                 <p className="mb-3">
-                    Originally created by Paul Falstad.<br />
-                    Ported to TypeScript/React.
+                    {t('dialog.about.credits')}<br />
+                    {t('dialog.about.ported')}
                 </p>
                 <p className="mb-4 text-circuit-text-muted">
-                    Version 0.1.0
+                    {t('dialog.about.version')}
                 </p>
                 <div className="text-center">
                     <button
                         onClick={onClose}
                         className="px-6 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
-                        OK
+                        {t('dialog.about.ok')}
                     </button>
                 </div>
             </div>

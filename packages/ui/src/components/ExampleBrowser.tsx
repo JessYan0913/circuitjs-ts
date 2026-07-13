@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CircuitEntry, CircuitCategory, SetupList } from '@circuitjs/circuits';
 import { fetchAndParseSetupList, fetchCircuitFile } from '@circuitjs/circuits';
 
@@ -28,6 +29,7 @@ function searchCircuits(entries: CircuitEntry[], query: string): CircuitEntry[] 
 }
 
 export function ExampleBrowser({ onLoadCircuit, onClose }: ExampleBrowserProps) {
+    const { t } = useTranslation();
     const [setupList, setSetupList] = useState<SetupList | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -114,7 +116,7 @@ export function ExampleBrowser({ onLoadCircuit, onClose }: ExampleBrowserProps) 
     if (loading) {
         return (
             <div className="flex flex-col h-[480px] font-mono text-circuit-lg text-circuit-text">
-                <div className="p-5 text-center text-circuit-text-muted">Loading circuit library...</div>
+                <div className="p-5 text-center text-circuit-text-muted">{t('dialog.examples.loading')}</div>
             </div>
         );
     }
@@ -122,7 +124,7 @@ export function ExampleBrowser({ onLoadCircuit, onClose }: ExampleBrowserProps) 
     if (error && !setupList) {
         return (
             <div className="flex flex-col h-[480px] font-mono text-circuit-lg text-circuit-text">
-                <div className="p-5 text-center text-red-500">Error: {error}</div>
+                <div className="p-5 text-center text-red-500">{t('dialog.examples.error', { message: error })}</div>
             </div>
         );
     }
@@ -134,7 +136,7 @@ export function ExampleBrowser({ onLoadCircuit, onClose }: ExampleBrowserProps) 
                 <input
                     className="w-full px-2 py-1.5 bg-circuit-bg-secondary border border-[#444] rounded text-circuit-text font-mono text-circuit-lg outline-none box-border"
                     type="text"
-                    placeholder="Search circuits..."
+                    placeholder={t('dialog.examples.searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => {
                         setSearchQuery(e.target.value);
@@ -189,7 +191,7 @@ export function ExampleBrowser({ onLoadCircuit, onClose }: ExampleBrowserProps) 
                 <div className="flex-1 overflow-y-auto">
                     {displayedCircuits.length === 0 ? (
                         <div className="p-5 text-center text-circuit-text-dim">
-                            {searchQuery ? `No circuits matching "${searchQuery}"` : 'No circuits in this category'}
+                            {searchQuery ? t('dialog.examples.noMatch', { query: searchQuery }) : t('dialog.examples.noCategory')}
                         </div>
                     ) : (
                         displayedCircuits.map((entry) => (
@@ -200,7 +202,7 @@ export function ExampleBrowser({ onLoadCircuit, onClose }: ExampleBrowserProps) 
                             >
                                 <span className="text-circuit-text-secondary">{entry.title}</span>
                                 <span className="text-circuit-text-dim text-circuit-sm">
-                                    {loadingCircuit === entry.file ? 'Loading...' : entry.file}
+                                    {loadingCircuit === entry.file ? t('dialog.examples.loadingCircuit') : entry.file}
                                 </span>
                             </div>
                         ))

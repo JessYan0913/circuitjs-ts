@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ScopeConfig } from '@circuitjs/shared';
 import { SCOPE_POINT_COUNT_INITIAL } from '@circuitjs/shared';
 import { drawWaveform } from '../canvas/WaveformRenderer.js';
@@ -112,6 +113,7 @@ interface ScopeViewProps {
 }
 
 function ScopeView({ scope, scopeIndex, maxTimeStep, onRemove, onConfig, setCanvasRef }: ScopeViewProps) {
+    const { t } = useTranslation();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -150,16 +152,16 @@ function ScopeView({ scope, scopeIndex, maxTimeStep, onRemove, onConfig, setCanv
     }, [scopeIndex]);
 
     const scopeLabel = scope.plots.length > 0
-        ? `Scope ${scopeIndex + 1}`
-        : `Scope ${scopeIndex + 1} (unbound)`;
+        ? t('scope.label', { index: scopeIndex + 1 })
+        : t('scope.unbound', { index: scopeIndex + 1 });
 
     return (
         <div className="border-b border-circuit-border">
             <div className="flex items-center px-2 py-0.5 h-6 bg-circuit-bg-secondary select-none gap-2" style={{ height: TITLE_BAR_HEIGHT }}>
                 <span className="text-circuit-text-secondary font-mono text-circuit-sm flex-1">{scopeLabel}</span>
-                <span className="text-circuit-text-dim font-mono text-circuit-xs">speed={scope.speed}</span>
-                <button onClick={onConfig} className="bg-none border-none text-circuit-text-muted cursor-pointer text-circuit-base p-0.5 rounded font-mono leading-none" title="Configure Scope">⚙</button>
-                <button onClick={onRemove} className="bg-none border-none text-circuit-text-muted cursor-pointer text-circuit-base p-0.5 rounded font-mono leading-none" title="Remove Scope">✕</button>
+                <span className="text-circuit-text-dim font-mono text-circuit-xs">{t('scope.speed', { speed: scope.speed })}</span>
+                <button onClick={onConfig} className="bg-none border-none text-circuit-text-muted cursor-pointer text-circuit-base p-0.5 rounded font-mono leading-none" title={t('scope.configure')}>⚙</button>
+                <button onClick={onRemove} className="bg-none border-none text-circuit-text-muted cursor-pointer text-circuit-base p-0.5 rounded font-mono leading-none" title={t('scope.remove')}>✕</button>
             </div>
 
             <div ref={containerRef} onWheel={handleWheel} className="w-full" style={{ height: `${height}px` }}>

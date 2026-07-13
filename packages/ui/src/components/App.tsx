@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CircuitComponent } from '@circuitjs/core';
 import { CustomCompositeComponent, CustomCompositeChipComponent, CustomCompositeModel } from '@circuitjs/core';
 import type { EditInfo } from '@circuitjs/shared';
@@ -32,7 +33,8 @@ type DialogState =
     | { type: 'none' };
 
 export function App() {
-    const [statusText, setStatusText] = useState('Ready');
+    const { t } = useTranslation();
+    const [statusText, setStatusText] = useState(t('app.status.ready'));
     const [refreshKey, setRefreshKey] = useState(0);
     const [dialog, setDialog] = useState<DialogState>({ type: 'none' });
 
@@ -86,7 +88,7 @@ export function App() {
             sim.loadComponents(parsed.components);
             const ok = sim.analyzeCircuit();
             if (!ok) {
-                setStatusText(`Error: ${sim.stopMessage}`);
+                setStatusText(t('app.status.error', { message: sim.stopMessage }));
                 return;
             }
             setSimManager(sim);
@@ -95,12 +97,12 @@ export function App() {
             setRefreshKey((k) => k + 1);
             setTimeout(() => autoCenter(), 50);
             setAddComponentType(null); // Reset add mode
-            setStatusText(label ? `Loaded: ${label}` : `Loaded: ${parsed.components.length} components`);
+            setStatusText(label ? t('app.status.loaded', { label }) : t('app.status.loadedCount', { count: parsed.components.length }));
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
-            setStatusText(`Error: ${msg}`);
+            setStatusText(t('app.status.error', { message: msg }));
         }
-    }, [setSimManager, setComponents, storeSetTime, autoCenter]);
+    }, [setSimManager, setComponents, storeSetTime, autoCenter, t]);
 
     // --- MenuBar actions ---
 
@@ -109,8 +111,8 @@ export function App() {
         setComponents([]);
         storeSetTime(0);
         setRefreshKey((k) => k + 1);
-        setStatusText('New circuit');
-    }, [setSimManager, setComponents, storeSetTime]);
+        setStatusText(t('app.status.newCircuit'));
+    }, [setSimManager, setComponents, storeSetTime, t]);
 
     const handleOpenFile = useCallback(() => {
         const input = document.createElement('input');
@@ -166,7 +168,7 @@ export function App() {
                 const state = useCircuitStore.getState();
                 const comps = state.components.filter((c) => c.volts.length > 0);
                 if (comps.length === 0) {
-                    setStatusText('No components to probe — add components first');
+                    setStatusText(t('app.status.noProbe'));
                     return;
                 }
                 const target = comps[0];
@@ -175,19 +177,19 @@ export function App() {
                 scope.plots = [plot];
                 const updated = [...state.scopes, scope];
                 setScopes(updated);
-                setStatusText(`Added scope, probing ${target.constructor.name.replace(/Component$/, '')}`);
+                setStatusText(t('app.status.scopeAdded', { name: target.constructor.name.replace(/Component$/, '') }));
                 break;
             }
             case 'remove': {
                 const state = useCircuitStore.getState();
                 if (state.scopes.length > 0) {
                     setScopes(state.scopes.slice(0, -1));
-                    setStatusText('Removed last scope');
+                    setStatusText(t('app.status.scopeRemoved'));
                 }
                 break;
             }
         }
-    }, [setScopes]);
+    }, [setScopes, t]);
 
     // Dispatch keyboard events to the canvas element
     const dispatchKeyEvent = useCallback((key: string, ctrl: boolean = false) => {
@@ -248,8 +250,8 @@ export function App() {
             simManager.analyzeCircuit();
         }
         setComponents([...useCircuitStore.getState().components]);
-        setStatusText('Applied changes');
-    }, [simManager, setComponents]);
+        setStatusText(t('app.status.applied'));
+    }, [simManager, setComponents, t]);
 
     // Handle add component type
     const handleAddComponentType = useCallback((type: string | null) => {
@@ -292,7 +294,7 @@ export function App() {
             state.simManager.analyzeCircuit();
         }
         setComponents([...state.components]);
-        setStatusText('Composite model updated');
+        setStatusText(t('app.status.compositeUpdated'));
 
         // Re-open the edit dialog for the component
         setDialog({ type: 'edit', component });
@@ -347,7 +349,7 @@ export function App() {
             {/* Status bar */}
             <div className="px-3 py-0.5 bg-circuit-bg-secondary border-t border-circuit-border text-circuit-text-muted text-circuit-base flex justify-between">
                 <span>{statusText}</span>
-                {simLoaded && <span>{components.length} components</span>}
+                {simLoaded && <span>{t('app.components', { count: components.length })}</span>}
             </div>
 
             {/* Dialogs */}
@@ -411,7 +413,7 @@ export function App() {
             )}
 
             {dialog.type === 'examples' && (
-                <Modal title="Example Circuits" onClose={() => setDialog({ type: 'none' })} width={600}>
+                <Modal title={t('dialog.examples.title')} onClose={() => setDialog({ type: 'none' })} width={600}>
                     <ExampleBrowser onLoadCircuit={handleLoadExample} onClose={() => setDialog({ type: 'none' })} />
                 </Modal>
             )}

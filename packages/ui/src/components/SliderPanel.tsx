@@ -1,8 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Adjustable } from '@circuitjs/shared';
 import { useCircuitStore } from '../store/circuitStore.js';
 
 export function SliderPanel() {
+    const { t } = useTranslation();
     const components = useCircuitStore((s) => s.components);
     const simManager = useCircuitStore((s) => s.simManager);
     const showSliders = useCircuitStore((s) => s.showSliders);
@@ -35,7 +37,7 @@ export function SliderPanel() {
     return (
         <div className="w-[180px] bg-circuit-bg-secondary border-l border-circuit-border p-2 overflow-auto flex flex-col gap-3 shrink-0">
             <div className="text-circuit-text-muted font-mono text-circuit-sm mb-1 select-none">
-                Sliders
+                {t('slider.title')}
             </div>
             {adjustableComponents.map(({ component, label }) => {
                 const value = component.getSliderValue();

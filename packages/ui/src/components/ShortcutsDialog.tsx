@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal } from './Modal.js';
 
 export interface ShortcutsDialogProps {
@@ -7,38 +8,39 @@ export interface ShortcutsDialogProps {
 
 interface ShortcutEntry {
     key: string;
-    description: string;
+    descriptionKey: string;
 }
 
 const shortcuts: ShortcutEntry[] = [
-    { key: 'Space', description: 'Run / Stop simulation' },
-    { key: 'Delete / Backspace', description: 'Delete selected component' },
-    { key: 'Ctrl+Z', description: 'Undo' },
-    { key: 'Ctrl+Y', description: 'Redo' },
-    { key: 'Ctrl+C', description: 'Copy selected' },
-    { key: 'Ctrl+V', description: 'Paste from clipboard' },
-    { key: 'Ctrl+A', description: 'Select all' },
-    { key: 'X', description: 'Flip horizontally' },
-    { key: 'Y', description: 'Flip vertically' },
-    { key: 'Arrow keys', description: 'Nudge selected component' },
-    { key: 'Escape', description: 'Clear selection' },
-    { key: 'Ctrl+Click', description: 'Toggle component selection' },
-    { key: 'Shift+Drag', description: 'Box select multiple components' },
-    { key: 'Double-click', description: 'Edit component properties' },
-    { key: 'Right-click', description: 'Context menu' },
-    { key: 'Scroll wheel', description: 'Zoom in/out' },
-    { key: 'Middle button / Alt+Click', description: 'Pan canvas' },
+    { key: 'Space', descriptionKey: 'dialog.shortcuts.list.runStop' },
+    { key: 'Delete / Backspace', descriptionKey: 'dialog.shortcuts.list.delete' },
+    { key: 'Ctrl+Z', descriptionKey: 'dialog.shortcuts.list.undo' },
+    { key: 'Ctrl+Y', descriptionKey: 'dialog.shortcuts.list.redo' },
+    { key: 'Ctrl+C', descriptionKey: 'dialog.shortcuts.list.copy' },
+    { key: 'Ctrl+V', descriptionKey: 'dialog.shortcuts.list.paste' },
+    { key: 'Ctrl+A', descriptionKey: 'dialog.shortcuts.list.selectAll' },
+    { key: 'X', descriptionKey: 'dialog.shortcuts.list.flipH' },
+    { key: 'Y', descriptionKey: 'dialog.shortcuts.list.flipV' },
+    { key: 'Arrow keys', descriptionKey: 'dialog.shortcuts.list.nudge' },
+    { key: 'Escape', descriptionKey: 'dialog.shortcuts.list.clearSel' },
+    { key: 'Ctrl+Click', descriptionKey: 'dialog.shortcuts.list.toggleSel' },
+    { key: 'Shift+Drag', descriptionKey: 'dialog.shortcuts.list.boxSelect' },
+    { key: 'Double-click', descriptionKey: 'dialog.shortcuts.list.editProps' },
+    { key: 'Right-click', descriptionKey: 'dialog.shortcuts.list.contextMenu' },
+    { key: 'Scroll wheel', descriptionKey: 'dialog.shortcuts.list.zoom' },
+    { key: 'Middle button / Alt+Click', descriptionKey: 'dialog.shortcuts.list.pan' },
 ];
 
 export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
+    const { t } = useTranslation();
     return (
-        <Modal title="Keyboard Shortcuts" onClose={onClose} width={450}>
+        <Modal title={t('dialog.shortcuts.title')} onClose={onClose} width={450}>
             <div className="font-mono text-circuit-base">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="border-b border-circuit-border">
-                            <th className="text-left px-3 py-1.5 text-circuit-text-muted font-normal">Key</th>
-                            <th className="text-left px-3 py-1.5 text-circuit-text-muted font-normal">Action</th>
+                            <th className="text-left px-3 py-1.5 text-circuit-text-muted font-normal">{t('dialog.shortcuts.key')}</th>
+                            <th className="text-left px-3 py-1.5 text-circuit-text-muted font-normal">{t('dialog.shortcuts.action')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,7 +49,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
                                 <td className="px-3 py-1 whitespace-nowrap" style={{ color: '#FFD700' }}>
                                     {s.key}
                                 </td>
-                                <td className="px-3 py-1 text-circuit-text-secondary">{s.description}</td>
+                                <td className="px-3 py-1 text-circuit-text-secondary">{t(s.descriptionKey)}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -57,7 +59,7 @@ export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
                         onClick={onClose}
                         className="px-6 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
-                        OK
+                        {t('dialog.shortcuts.ok')}
                     </button>
                 </div>
             </div>

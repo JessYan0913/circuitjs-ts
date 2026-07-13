@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CircuitComponent } from '@circuitjs/core';
 import type { EditInfo } from '@circuitjs/shared';
 import { Modal } from './Modal.js';
@@ -18,6 +19,7 @@ interface EditFieldState {
 }
 
 export function EditDialog({ component, onApply, onClose, onButtonAction }: EditDialogProps) {
+    const { t } = useTranslation();
     const fields = useMemo(() => {
         const result: EditFieldState[] = [];
         for (let n = 0; ; n++) {
@@ -125,7 +127,7 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
     const componentName = component.constructor.name.replace(/Component$/, '');
 
     return (
-        <Modal title={`Edit ${componentName}`} onClose={handleCancel} width={380} key={refreshKey}>
+        <Modal title={t('dialog.edit.title', { name: componentName })} onClose={handleCancel} width={380} key={refreshKey}>
             <div className="flex flex-col gap-1">
                 {fieldStates.map((fs) => renderField(fs, {
                     updateDisplayValue,
@@ -135,13 +137,13 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
                 }))}
 
                 {fieldStates.length === 0 && (
-                    <div className="text-circuit-text-muted font-mono text-circuit-base">No editable properties</div>
+                    <div className="text-circuit-text-muted font-mono text-circuit-base">{t('dialog.edit.noProperties')}</div>
                 )}
 
                 <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-circuit-border">
-                    <button onClick={handleApply} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Apply</button>
-                    <button onClick={handleOk} className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">OK</button>
-                    <button onClick={handleCancel} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Cancel</button>
+                    <button onClick={handleApply} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">{t('dialog.edit.apply')}</button>
+                    <button onClick={handleOk} className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">{t('dialog.edit.ok')}</button>
+                    <button onClick={handleCancel} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">{t('dialog.edit.cancel')}</button>
                 </div>
             </div>
         </Modal>

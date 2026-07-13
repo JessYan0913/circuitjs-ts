@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ScopeConfig } from '@circuitjs/shared';
 import { Modal } from './Modal.js';
 import { useCircuitStore } from '../store/circuitStore.js';
@@ -9,6 +10,7 @@ export interface ScopeConfigDialogProps {
 }
 
 export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProps) {
+    const { t } = useTranslation();
     const scopes = useCircuitStore((s) => s.scopes);
     const components = useCircuitStore((s) => s.components);
     const setScopes = useCircuitStore((s) => s.setScopes);
@@ -73,11 +75,11 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
     }, []);
 
     return (
-        <Modal title={`Scope ${scopeIndex + 1} Configuration`} onClose={onClose} width={420}>
+        <Modal title={t('dialog.scopeConfig.title', { index: scopeIndex + 1 })} onClose={onClose} width={420}>
             <div className="font-mono text-circuit-base flex flex-col gap-3">
                 {/* Timebase speed */}
                 <div>
-                    <div className="text-circuit-text-secondary mb-1">Timebase Speed</div>
+                    <div className="text-circuit-text-secondary mb-1">{t('dialog.scopeConfig.timebaseSpeed')}</div>
                     <input
                         type="range"
                         min={1}
@@ -92,16 +94,16 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
                 {/* Plot bindings */}
                 {plotBindings.map((binding, i) => (
                     <div key={i} className="p-2 bg-circuit-bg-tertiary rounded">
-                        <div className="text-circuit-text-secondary mb-1.5">Channel {i + 1}</div>
+                        <div className="text-circuit-text-secondary mb-1.5">{t('dialog.scopeConfig.channel', { index: i + 1 })}</div>
 
                         <div className="mb-1.5">
-                            <div className="text-circuit-text-muted text-circuit-xs mb-0.5">Component</div>
+                            <div className="text-circuit-text-muted text-circuit-xs mb-0.5">{t('dialog.scopeConfig.component')}</div>
                             <select
                                 value={binding.componentId}
                                 onChange={(e) => updatePlotBinding(i, 'componentId', parseInt(e.target.value))}
                                 className="w-full px-1.5 py-1 bg-circuit-bg-canvas text-circuit-text border border-circuit-border-light rounded font-mono text-circuit-sm cursor-pointer outline-none box-border"
                             >
-                                <option value={-1}>— None —</option>
+                                <option value={-1}>{t('dialog.scopeConfig.none')}</option>
                                 {availableComponents.map((c) => (
                                     <option key={c.id} value={c.id}>
                                         {c.constructor.name.replace(/Component$/, '')} (#{c.id})
@@ -112,7 +114,7 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
 
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <div className="text-circuit-text-muted text-circuit-xs mb-0.5">Y Scale (V/div)</div>
+                                <div className="text-circuit-text-muted text-circuit-xs mb-0.5">{t('dialog.scopeConfig.yScale')}</div>
                                 <input
                                     type="number"
                                     value={binding.scale}
@@ -123,7 +125,7 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
                                 />
                             </div>
                             <div className="flex-1">
-                                <div className="text-circuit-text-muted text-circuit-xs mb-0.5">Y Offset</div>
+                                <div className="text-circuit-text-muted text-circuit-xs mb-0.5">{t('dialog.scopeConfig.yOffset')}</div>
                                 <input
                                     type="number"
                                     value={binding.offset}
@@ -138,25 +140,25 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
 
                 {/* Display options */}
                 <div className="p-2 bg-circuit-bg-tertiary rounded">
-                    <div className="text-circuit-text-secondary mb-1.5">Display Options</div>
+                    <div className="text-circuit-text-secondary mb-1.5">{t('dialog.scopeConfig.displayOptions')}</div>
                     <div className="grid grid-cols-2 gap-1">
                         {[
-                            { label: 'Show Max', value: showMax, set: setShowMax },
-                            { label: 'Show Min', value: showMin, set: setShowMin },
-                            { label: 'Show Freq', value: showFreq, set: setShowFreq },
-                            { label: 'Show FFT', value: showFFT, set: setShowFFT },
-                            { label: 'Show RMS', value: showRMS, set: setShowRMS },
-                            { label: 'Show Scale', value: showScale, set: setShowScale },
-                            { label: 'Log Spectrum', value: logSpectrum, set: setLogSpectrum },
+                            { labelKey: 'dialog.scopeConfig.showMax', value: showMax, set: setShowMax },
+                            { labelKey: 'dialog.scopeConfig.showMin', value: showMin, set: setShowMin },
+                            { labelKey: 'dialog.scopeConfig.showFreq', value: showFreq, set: setShowFreq },
+                            { labelKey: 'dialog.scopeConfig.showFFT', value: showFFT, set: setShowFFT },
+                            { labelKey: 'dialog.scopeConfig.showRMS', value: showRMS, set: setShowRMS },
+                            { labelKey: 'dialog.scopeConfig.showScale', value: showScale, set: setShowScale },
+                            { labelKey: 'dialog.scopeConfig.logSpectrum', value: logSpectrum, set: setLogSpectrum },
                         ].map((opt) => (
-                            <label key={opt.label} className="flex items-center gap-1.5 text-circuit-text-secondary cursor-pointer">
+                            <label key={opt.labelKey} className="flex items-center gap-1.5 text-circuit-text-secondary cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={opt.value}
                                     onChange={(e) => opt.set(e.target.checked)}
                                     className="accent-circuit-accent"
                                 />
-                                {opt.label}
+                                {t(opt.labelKey)}
                             </label>
                         ))}
                     </div>
@@ -164,9 +166,9 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
 
                 {/* Buttons */}
                 <div className="flex justify-end gap-2 mt-2">
-                    <button onClick={handleApply} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Apply</button>
-                    <button onClick={handleOk} className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">OK</button>
-                    <button onClick={onClose} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Cancel</button>
+                    <button onClick={handleApply} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">{t('dialog.scopeConfig.apply')}</button>
+                    <button onClick={handleOk} className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">{t('dialog.scopeConfig.ok')}</button>
+                    <button onClick={onClose} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">{t('dialog.scopeConfig.cancel')}</button>
                 </div>
             </div>
         </Modal>
