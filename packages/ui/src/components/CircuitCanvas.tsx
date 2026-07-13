@@ -9,7 +9,6 @@ import { useCircuitStore } from '../store/circuitStore.js';
 import { setRendererRef, setCanvasSize } from '../store/types.js';
 
 const MENU_WIDTH = 160;
-const MENU_ITEM_HEIGHT = 28;
 
 export interface CircuitCanvasProps {
     onEditComponent?: (component: CircuitComponent) => void;
@@ -481,7 +480,7 @@ export function CircuitCanvas({ onEditComponent, onAddComponentType, onUndoState
     }, [contextMenu]);
 
     return (
-        <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <div ref={containerRef} className="relative w-full h-full">
             <canvas
                 ref={canvasRef}
                 tabIndex={0}
@@ -495,49 +494,23 @@ export function CircuitCanvas({ onEditComponent, onAddComponentType, onUndoState
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                style={{
-                    display: 'block', width: '100%', height: '100%',
-                    cursor: 'crosshair', outline: 'none',
-                }}
+                className="block w-full h-full cursor-crosshair outline-none"
             />
 
             {/* Context Menu */}
             {contextMenu && (
                 <div
-                    style={{
-                        position: 'absolute',
-                        left: contextMenu.x,
-                        top: contextMenu.y,
-                        width: MENU_WIDTH,
-                        backgroundColor: '#2a2a2a',
-                        border: '1px solid #555',
-                        borderRadius: '4px',
-                        boxShadow: '2px 2px 8px rgba(0,0,0,0.5)',
-                        zIndex: 1000,
-                        padding: '4px 0',
-                        fontFamily: 'monospace',
-                        fontSize: '12px',
-                        color: '#FFF',
-                        userSelect: 'none',
-                    }}
+                    className="absolute bg-circuit-bg-tertiary border border-circuit-border-light rounded shadow-[2px_2px_8px_rgba(0,0,0,0.5)] z-[1000] py-1 font-mono text-circuit-base text-circuit-text select-none"
+                    style={{ left: contextMenu.x, top: contextMenu.y, width: MENU_WIDTH }}
                 >
                     {contextMenu.items.map((item, i) => (
                         <div
                             key={i}
                             onClick={() => handleContextAction(item.action, contextMenu.componentId)}
+                            className="px-3 h-7 leading-7 cursor-pointer hover:bg-circuit-bg-hover"
                             style={{
-                                padding: '4px 12px',
-                                height: MENU_ITEM_HEIGHT,
-                                lineHeight: `${MENU_ITEM_HEIGHT}px`,
-                                cursor: item.enabled ? 'pointer' : 'default',
                                 opacity: item.enabled ? 1 : 0.4,
-                                backgroundColor: 'transparent',
-                            }}
-                            onMouseEnter={(e) => {
-                                if (item.enabled) e.currentTarget.style.backgroundColor = '#444';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'transparent';
+                                cursor: item.enabled ? 'pointer' : 'default',
                             }}
                         >
                             {item.label}

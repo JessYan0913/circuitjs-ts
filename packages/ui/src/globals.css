@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 80%;
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 204 64% 44%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 80%;
+    --muted: 0 0% 53%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 204 64% 44%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 33%;
+    --ring: 204 64% 44%;
+    --radius: 0.375rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    @apply bg-background text-foreground font-mono;
+    font-size: 13px;
+    overflow: hidden;
+  }
+}
+
+@layer utilities {
+  .menu-item {
+    @apply px-3.5 py-1 text-foreground text-circuit-base cursor-pointer select-none
+           whitespace-nowrap flex items-center justify-between gap-3;
+  }
+  .menu-item:hover,
+  .menu-item[data-highlighted] {
+    @apply bg-circuit-bg-hover outline-none;
+  }
+  .menu-item[data-disabled] {
+    @apply opacity-40 cursor-default pointer-events-none;
+  }
+}

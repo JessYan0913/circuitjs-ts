@@ -305,15 +305,7 @@ export function App() {
     }, [loadCircuit]);
 
     return (
-        <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100vh',
-            backgroundColor: '#000',
-            color: '#FFF',
-            fontFamily: 'monospace',
-            fontSize: '13px',
-        }}>
+        <div className="flex flex-col h-screen bg-circuit-bg text-circuit-text font-mono text-circuit-lg">
             {/* Menu bar with simulation controls */}
             <MenuBar
                 onAddComponentType={handleAddComponentType}
@@ -335,9 +327,9 @@ export function App() {
             />
 
             {/* Main content: canvas + optional slider panel */}
-            <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                    <div ref={canvasContainerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+            <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden">
+                    <div ref={canvasContainerRef} className="flex-1 relative overflow-hidden">
                         <CircuitCanvas
                             key={refreshKey}
                             onEditComponent={handleEditComponent}
@@ -353,15 +345,7 @@ export function App() {
             </div>
 
             {/* Status bar */}
-            <div style={{
-                padding: '3px 12px',
-                backgroundColor: '#1a1a1a',
-                borderTop: '1px solid #333',
-                color: '#888',
-                fontSize: '12px',
-                display: 'flex',
-                justifyContent: 'space-between',
-            }}>
+            <div className="px-3 py-0.5 bg-circuit-bg-secondary border-t border-circuit-border text-circuit-text-muted text-circuit-base flex justify-between">
                 <span>{statusText}</span>
                 {simLoaded && <span>{components.length} components</span>}
             </div>

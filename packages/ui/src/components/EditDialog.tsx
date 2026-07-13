@@ -4,80 +4,10 @@ import type { EditInfo } from '@circuitjs/shared';
 import { Modal } from './Modal.js';
 import { parseUnitValue, formatEditValue, getUnitSuffix } from '../canvas/unitParser.js';
 
-const labelStyle: React.CSSProperties = {
-    color: '#CCC',
-    fontSize: '12px',
-    fontFamily: 'monospace',
-    marginBottom: '2px',
-    userSelect: 'none',
-};
-
-const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '4px 8px',
-    backgroundColor: '#2a2a2a',
-    color: '#FFF',
-    border: '1px solid #555',
-    borderRadius: '3px',
-    fontFamily: 'monospace',
-    fontSize: '12px',
-    outline: 'none',
-    boxSizing: 'border-box',
-};
-
-const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: 'pointer',
-};
-
-const checkboxRowStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '4px 0',
-};
-
-const rowStyle: React.CSSProperties = {
-    marginBottom: '10px',
-};
-
-const buttonRowStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    gap: '8px',
-    marginTop: '16px',
-    paddingTop: '12px',
-    borderTop: '1px solid #333',
-};
-
-const btnStyle: React.CSSProperties = {
-    padding: '6px 16px',
-    backgroundColor: '#333',
-    color: '#FFF',
-    border: '1px solid #555',
-    borderRadius: '3px',
-    cursor: 'pointer',
-    fontFamily: 'monospace',
-    fontSize: '12px',
-};
-
-const primaryBtnStyle: React.CSSProperties = {
-    ...btnStyle,
-    backgroundColor: '#1a5276',
-    borderColor: '#2980b9',
-};
-
-const actionBtnStyle: React.CSSProperties = {
-    ...btnStyle,
-    backgroundColor: '#2d3e2d',
-    borderColor: '#4a6a4a',
-};
-
 export interface EditDialogProps {
     component: CircuitComponent;
     onApply: (component: CircuitComponent) => void;
     onClose: () => void;
-    /** Callback for special button actions (e.g., opening composite model editor). Passes the edited component. */
     onButtonAction?: (n: number, info: EditInfo, component: CircuitComponent) => void;
 }
 
@@ -88,7 +18,6 @@ interface EditFieldState {
 }
 
 export function EditDialog({ component, onApply, onClose, onButtonAction }: EditDialogProps) {
-    // Collect all edit info entries
     const fields = useMemo(() => {
         const result: EditFieldState[] = [];
         for (let n = 0; ; n++) {
@@ -110,10 +39,8 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
     const applyChanges = useCallback(() => {
         for (const fs of fieldStates) {
             const { n, info } = fs;
-            // Java: skip button items in apply()
             if (info.button) continue;
             if (info.value !== undefined && info.choices === undefined && !info.checkbox) {
-                // Numeric field: parse from display value
                 const parsed = parseUnitValue(fs.displayValue);
                 info.value = parsed;
             }
@@ -125,23 +52,12 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
         onApply(component);
     }, [fieldStates, component, onApply]);
 
-    const handleApply = useCallback(() => {
-        applyChanges();
-    }, [applyChanges]);
-
-    const handleOk = useCallback(() => {
-        applyChanges();
-        onClose();
-    }, [applyChanges, onClose]);
-
-    const handleCancel = useCallback(() => {
-        onClose();
-    }, [onClose]);
+    const handleApply = useCallback(() => { applyChanges(); }, [applyChanges]);
+    const handleOk = useCallback(() => { applyChanges(); onClose(); }, [applyChanges, onClose]);
+    const handleCancel = useCallback(() => { onClose(); }, [onClose]);
 
     const updateDisplayValue = useCallback((n: number, value: string) => {
-        setFieldStates((prev) =>
-            prev.map((fs) => (fs.n === n ? { ...fs, displayValue: value } : fs)),
-        );
+        setFieldStates((prev) => prev.map((fs) => (fs.n === n ? { ...fs, displayValue: value } : fs)));
     }, []);
 
     const handleCheckboxChange = useCallback((n: number, checked: boolean) => {
@@ -161,9 +77,7 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
                 if (fs.n !== n) return fs;
                 const newInfo = { ...fs.info, selectedIndex };
                 component.setEditValue(n, newInfo);
-                // If newDialog flag, rebuild
                 if (newInfo.newDialog) {
-                    // Need to re-query the component
                     setTimeout(() => {
                         const newFields: EditFieldState[] = [];
                         for (let i = 0; ; i++) {
@@ -187,14 +101,11 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
     const handleButtonClick = useCallback((n: number) => {
         const fs = fieldStates.find((f) => f.n === n);
         if (!fs) return;
-        // Apply current changes then fire button
         applyChanges();
         component.setEditValue(n, fs.info);
-        // Notify parent of button action (for opening sub-dialogs)
         if (onButtonAction) {
             onButtonAction(n, fs.info, component);
         }
-        // Rebuild dialog if needed
         setTimeout(() => {
             const newFields: EditFieldState[] = [];
             for (let i = 0; ; i++) {
@@ -215,7 +126,7 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
 
     return (
         <Modal title={`Edit ${componentName}`} onClose={handleCancel} width={380} key={refreshKey}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div className="flex flex-col gap-1">
                 {fieldStates.map((fs) => renderField(fs, {
                     updateDisplayValue,
                     onCheckboxChange: handleCheckboxChange,
@@ -224,15 +135,13 @@ export function EditDialog({ component, onApply, onClose, onButtonAction }: Edit
                 }))}
 
                 {fieldStates.length === 0 && (
-                    <div style={{ color: '#888', fontFamily: 'monospace', fontSize: '12px' }}>
-                        No editable properties
-                    </div>
+                    <div className="text-circuit-text-muted font-mono text-circuit-base">No editable properties</div>
                 )}
 
-                <div style={buttonRowStyle}>
-                    <button onClick={handleApply} style={btnStyle}>Apply</button>
-                    <button onClick={handleOk} style={primaryBtnStyle}>OK</button>
-                    <button onClick={handleCancel} style={btnStyle}>Cancel</button>
+                <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-circuit-border">
+                    <button onClick={handleApply} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Apply</button>
+                    <button onClick={handleOk} className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">OK</button>
+                    <button onClick={handleCancel} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Cancel</button>
                 </div>
             </div>
         </Modal>
@@ -257,16 +166,14 @@ interface FieldHandlers {
 function renderField(fs: EditFieldState, handlers: FieldHandlers): React.ReactNode {
     const { n, info, displayValue } = fs;
 
-    // Java priority: choice → checkbox → button → textArea → widget → numeric
-    // 1. Choices / dropdown (checked first in Java)
     if (info.choices && info.choices.length > 0) {
         return (
-            <div key={n} style={rowStyle}>
-                <div style={labelStyle}>{info.name}</div>
+            <div key={n} className="mb-2.5">
+                <div className="text-circuit-text-secondary text-circuit-base font-mono mb-0.5 select-none">{info.name}</div>
                 <select
                     value={info.selectedIndex ?? 0}
                     onChange={(e) => handlers.onChoiceChange(n, parseInt(e.target.value))}
-                    style={selectStyle}
+                    className="w-full px-2 py-1 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded font-mono text-circuit-base cursor-pointer outline-none box-border"
                 >
                     {info.choices.map((choice, i) => (
                         <option key={i} value={i}>{choice}</option>
@@ -276,67 +183,60 @@ function renderField(fs: EditFieldState, handlers: FieldHandlers): React.ReactNo
         );
     }
 
-    // 2. Checkbox
     if (info.checkbox) {
         return (
-            <div key={n} style={checkboxRowStyle}>
+            <div key={n} className="flex items-center gap-2 py-1">
                 <input
                     type="checkbox"
                     id={`cb-${n}`}
                     checked={info.checkboxState ?? false}
                     onChange={(e) => handlers.onCheckboxChange(n, e.target.checked)}
-                    style={{ accentColor: '#2980b9' }}
+                    className="accent-circuit-accent"
                 />
-                <label htmlFor={`cb-${n}`} style={{ ...labelStyle, marginBottom: 0, cursor: 'pointer' }}>
-                    {info.name}
-                </label>
+                <label htmlFor={`cb-${n}`} className="text-circuit-text-secondary text-circuit-base font-mono cursor-pointer mb-0">{info.name}</label>
             </div>
         );
     }
 
-    // 3. Button
     if (info.button) {
         return (
-            <div key={n} style={rowStyle}>
-                <button onClick={() => handlers.onButtonClick(n)} style={actionBtnStyle}>
+            <div key={n} className="mb-2.5">
+                <button onClick={() => handlers.onButtonClick(n)}
+                    className="px-4 py-1.5 bg-[#2d3e2d] text-circuit-text border border-[#4a6a4a] rounded cursor-pointer font-mono text-circuit-base">
                     {info.button}
                 </button>
             </div>
         );
     }
 
-    // 4. Text field (when text is present)
     if (info.text !== undefined) {
         return (
-            <div key={n} style={rowStyle}>
-                <div style={labelStyle}>{info.name}</div>
+            <div key={n} className="mb-2.5">
+                <div className="text-circuit-text-secondary text-circuit-base font-mono mb-0.5 select-none">{info.name}</div>
                 <input
                     type="text"
                     value={displayValue}
                     onChange={(e) => handlers.updateDisplayValue(n, e.target.value)}
-                    style={inputStyle}
+                    className="w-full px-2 py-1 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded font-mono text-circuit-base outline-none box-border"
                 />
             </div>
         );
     }
 
-    // 5. Numeric field (default)
     const unitSuffix = getUnitSuffix(info.name, info.dimensionless);
 
     return (
-        <div key={n} style={rowStyle}>
-            <div style={labelStyle}>{info.name}</div>
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <div key={n} className="mb-2.5">
+            <div className="text-circuit-text-secondary text-circuit-base font-mono mb-0.5 select-none">{info.name}</div>
+            <div className="flex gap-1 items-center">
                 <input
                     type="text"
                     value={displayValue}
                     onChange={(e) => handlers.updateDisplayValue(n, e.target.value)}
-                    style={{ ...inputStyle, flex: 1 }}
+                    className="flex-1 px-2 py-1 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded font-mono text-circuit-base outline-none box-border"
                 />
                 {unitSuffix && (
-                    <span style={{ color: '#888', fontSize: '12px', fontFamily: 'monospace', minWidth: '20px' }}>
-                        {unitSuffix}
-                    </span>
+                    <span className="text-circuit-text-muted text-circuit-base font-mono min-w-[20px]">{unitSuffix}</span>
                 )}
             </div>
         </div>

@@ -36,56 +36,26 @@ export function ExportAsTextDialog({ onClose }: ExportAsTextDialogProps) {
 
     return (
         <Modal title="Export As Text" onClose={onClose} width={500}>
-            <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                <p style={{ color: '#888', margin: '0 0 8px 0' }}>
+            <div className="font-mono text-circuit-base">
+                <p className="text-circuit-text-muted mb-2">
                     Copy the circuit data below to share or save:
                 </p>
                 <textarea
                     readOnly
                     value={circuitText}
-                    style={{
-                        width: '100%',
-                        height: '300px',
-                        backgroundColor: '#111',
-                        color: '#0F0',
-                        border: '1px solid #444',
-                        borderRadius: '3px',
-                        padding: '8px',
-                        fontFamily: 'monospace',
-                        fontSize: '11px',
-                        resize: 'none',
-                        boxSizing: 'border-box',
-                    }}
+                    className="w-full h-[300px] bg-circuit-bg-canvas text-circuit-text border border-circuit-border rounded p-2 font-mono text-circuit-sm resize-none box-border"
                     onClick={(e) => (e.target as HTMLTextAreaElement).select()}
                 />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                <div className="flex justify-end gap-2 mt-3">
                     <button
                         onClick={handleCopy}
-                        style={{
-                            padding: '6px 16px',
-                            backgroundColor: '#333',
-                            color: '#FFF',
-                            border: '1px solid #555',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
                         Copy to Clipboard
                     </button>
                     <button
                         onClick={onClose}
-                        style={{
-                            padding: '6px 16px',
-                            backgroundColor: '#1a5276',
-                            color: '#FFF',
-                            border: '1px solid #2980b9',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base"
                     >
                         Close
                     </button>

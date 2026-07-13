@@ -46,61 +46,29 @@ export function ImportFromTextDialog({ onClose }: ImportFromTextDialogProps) {
 
     return (
         <Modal title="Import From Text" onClose={onClose} width={500}>
-            <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                <p style={{ color: '#888', margin: '0 0 8px 0' }}>
+            <div className="font-mono text-circuit-base">
+                <p className="text-circuit-text-muted mb-2">
                     Paste circuit data text below and click Import:
                 </p>
                 <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="Paste circuit data here..."
-                    style={{
-                        width: '100%',
-                        height: '300px',
-                        backgroundColor: '#111',
-                        color: '#FFF',
-                        border: '1px solid #444',
-                        borderRadius: '3px',
-                        padding: '8px',
-                        fontFamily: 'monospace',
-                        fontSize: '11px',
-                        resize: 'none',
-                        boxSizing: 'border-box',
-                    }}
+                    className="w-full h-[300px] bg-circuit-bg-canvas text-circuit-text border border-circuit-border rounded p-2 font-mono text-circuit-sm resize-none box-border"
                 />
                 {error && (
-                    <p style={{ color: '#F44', margin: '8px 0 0 0', fontSize: '11px' }}>
-                        {error}
-                    </p>
+                    <p className="text-red-500 mt-2 text-circuit-sm">{error}</p>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                <div className="flex justify-end gap-2 mt-3">
                     <button
                         onClick={handleImport}
-                        style={{
-                            padding: '6px 16px',
-                            backgroundColor: '#1a5276',
-                            color: '#FFF',
-                            border: '1px solid #2980b9',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base"
                     >
                         Import
                     </button>
                     <button
                         onClick={onClose}
-                        style={{
-                            padding: '6px 16px',
-                            backgroundColor: '#333',
-                            color: '#FFF',
-                            border: '1px solid #555',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
                         Cancel
                     </button>

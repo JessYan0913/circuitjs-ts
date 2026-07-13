@@ -19,8 +19,6 @@ export function ExportAsUrlDialog({ onClose }: ExportAsUrlDialogProps) {
             try {
                 const { Serializer } = await import('@circuitjs/core');
                 const text = Serializer.dumpCircuit(simManager);
-                // Simple URL encoding (the original Java uses Deflater compression,
-                // but for now we use basic encoding)
                 const encoded = encodeURIComponent(text);
                 setUrlText(`${window.location.origin}${window.location.pathname}?circuit=${encoded}`);
             } catch {
@@ -39,57 +37,26 @@ export function ExportAsUrlDialog({ onClose }: ExportAsUrlDialogProps) {
 
     return (
         <Modal title="Export As URL" onClose={onClose} width={550}>
-            <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                <p style={{ color: '#888', margin: '0 0 8px 0' }}>
+            <div className="font-mono text-circuit-base">
+                <p className="text-circuit-text-muted mb-2">
                     Share this URL to load the current circuit:
                 </p>
                 <textarea
                     readOnly
                     value={urlText}
-                    style={{
-                        width: '100%',
-                        height: '100px',
-                        backgroundColor: '#111',
-                        color: '#0F0',
-                        border: '1px solid #444',
-                        borderRadius: '3px',
-                        padding: '8px',
-                        fontFamily: 'monospace',
-                        fontSize: '11px',
-                        resize: 'none',
-                        boxSizing: 'border-box',
-                        wordBreak: 'break-all',
-                    }}
+                    className="w-full h-[100px] bg-circuit-bg-canvas text-circuit-text border border-circuit-border rounded p-2 font-mono text-circuit-sm resize-none box-border break-all"
                     onClick={(e) => (e.target as HTMLTextAreaElement).select()}
                 />
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                <div className="flex justify-end gap-2 mt-3">
                     <button
                         onClick={handleCopy}
-                        style={{
-                            padding: '6px 16px',
-                            backgroundColor: '#333',
-                            color: '#FFF',
-                            border: '1px solid #555',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
                         Copy to Clipboard
                     </button>
                     <button
                         onClick={onClose}
-                        style={{
-                            padding: '6px 16px',
-                            backgroundColor: '#1a5276',
-                            color: '#FFF',
-                            border: '1px solid #2980b9',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base"
                     >
                         Close
                     </button>

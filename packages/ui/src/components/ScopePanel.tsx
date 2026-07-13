@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import type { ScopeConfig } from '@circuitjs/shared';
 import { SCOPE_POINT_COUNT_INITIAL } from '@circuitjs/shared';
 import { drawWaveform } from '../canvas/WaveformRenderer.js';
@@ -25,12 +25,6 @@ export function ScopePanel({ onConfigScope }: ScopePanelProps) {
 
     const maxTimeStep = simManager?.config.maxTimeStep ?? 5e-6;
 
-    // Track scope heights
-    const scopeHeights = useMemo(() => {
-        return scopes.map((s) => s.rect.height || DEFAULT_SCOPE_HEIGHT);
-    }, [scopes]);
-
-    // Set canvas ref for a scope
     const setCanvasRef = useCallback((scopeIndex: number, canvas: HTMLCanvasElement | null) => {
         if (canvas) {
             canvasRefs.current.set(scopeIndex, canvas);
@@ -39,7 +33,6 @@ export function ScopePanel({ onConfigScope }: ScopePanelProps) {
         }
     }, []);
 
-    // Render all scope waveforms
     const renderScopes = useCallback(() => {
         const state = useCircuitStore.getState();
         const currentScopes = state.scopes;
@@ -68,7 +61,6 @@ export function ScopePanel({ onConfigScope }: ScopePanelProps) {
         }
     }, [maxTimeStep]);
 
-    // Animation loop
     useEffect(() => {
         if (running && scopes.length > 0) {
             lastFrameTimeRef.current = 0;
@@ -85,7 +77,6 @@ export function ScopePanel({ onConfigScope }: ScopePanelProps) {
         };
     }, [running, scopes.length, renderScopes]);
 
-    // Remove a scope
     const handleRemoveScope = useCallback((index: number) => {
         const current = useCircuitStore.getState().scopes;
         const updated = current.filter((_, i) => i !== index);
@@ -95,12 +86,7 @@ export function ScopePanel({ onConfigScope }: ScopePanelProps) {
     if (scopes.length === 0) return null;
 
     return (
-        <div style={{
-            backgroundColor: '#111',
-            borderTop: '1px solid #333',
-            display: 'flex',
-            flexDirection: 'column',
-        }}>
+        <div className="bg-circuit-bg-canvas border-t border-circuit-border flex flex-col">
             {scopes.map((scope, index) => (
                 <ScopeView
                     key={index}
@@ -129,7 +115,6 @@ function ScopeView({ scope, scopeIndex, maxTimeStep, onRemove, onConfig, setCanv
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Height state
     const [height, setHeight] = React.useState(scope.rect.height || DEFAULT_SCOPE_HEIGHT);
 
     useEffect(() => {
@@ -137,7 +122,6 @@ function ScopeView({ scope, scopeIndex, maxTimeStep, onRemove, onConfig, setCanv
         return () => setCanvasRef(scopeIndex, null);
     }, [scopeIndex, setCanvasRef]);
 
-    // Resize canvas to match container
     useEffect(() => {
         const container = containerRef.current;
         const canvas = canvasRef.current;
@@ -154,7 +138,6 @@ function ScopeView({ scope, scopeIndex, maxTimeStep, onRemove, onConfig, setCanv
         return () => observer.disconnect();
     }, []);
 
-    // Mouse wheel for timebase speed
     const handleWheel = useCallback((e: React.WheelEvent) => {
         e.preventDefault();
         const store = useCircuitStore.getState();
@@ -171,62 +154,17 @@ function ScopeView({ scope, scopeIndex, maxTimeStep, onRemove, onConfig, setCanv
         : `Scope ${scopeIndex + 1} (unbound)`;
 
     return (
-        <div style={{ borderBottom: '1px solid #333' }}>
-            {/* Title bar */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '2px 8px',
-                height: TITLE_BAR_HEIGHT,
-                backgroundColor: '#1a1a1a',
-                userSelect: 'none',
-                gap: '8px',
-            }}>
-                <span style={{ color: '#CCC', fontFamily: 'monospace', fontSize: '11px', flex: 1 }}>
-                    {scopeLabel}
-                </span>
-                <span style={{ color: '#666', fontFamily: 'monospace', fontSize: '10px' }}>
-                    speed={scope.speed}
-                </span>
-                <button
-                    onClick={onConfig}
-                    style={titleBtnStyle}
-                    title="Configure Scope"
-                >
-                    ⚙
-                </button>
-                <button
-                    onClick={onRemove}
-                    style={titleBtnStyle}
-                    title="Remove Scope"
-                >
-                    ✕
-                </button>
+        <div className="border-b border-circuit-border">
+            <div className="flex items-center px-2 py-0.5 h-6 bg-circuit-bg-secondary select-none gap-2" style={{ height: TITLE_BAR_HEIGHT }}>
+                <span className="text-circuit-text-secondary font-mono text-circuit-sm flex-1">{scopeLabel}</span>
+                <span className="text-circuit-text-dim font-mono text-circuit-xs">speed={scope.speed}</span>
+                <button onClick={onConfig} className="bg-none border-none text-circuit-text-muted cursor-pointer text-circuit-base p-0.5 rounded font-mono leading-none" title="Configure Scope">⚙</button>
+                <button onClick={onRemove} className="bg-none border-none text-circuit-text-muted cursor-pointer text-circuit-base p-0.5 rounded font-mono leading-none" title="Remove Scope">✕</button>
             </div>
 
-            {/* Waveform canvas */}
-            <div
-                ref={containerRef}
-                onWheel={handleWheel}
-                style={{ width: '100%', height: `${height}px` }}
-            >
-                <canvas
-                    ref={canvasRef}
-                    style={{ display: 'block', width: '100%', height: '100%' }}
-                />
+            <div ref={containerRef} onWheel={handleWheel} className="w-full" style={{ height: `${height}px` }}>
+                <canvas ref={canvasRef} className="block w-full h-full" />
             </div>
         </div>
     );
 }
-
-const titleBtnStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    color: '#888',
-    cursor: 'pointer',
-    fontSize: '12px',
-    padding: '2px 4px',
-    borderRadius: '3px',
-    fontFamily: 'monospace',
-    lineHeight: 1,
-};

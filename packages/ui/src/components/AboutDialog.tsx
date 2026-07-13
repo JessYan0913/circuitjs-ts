@@ -8,31 +8,22 @@ export interface AboutDialogProps {
 export function AboutDialog({ onClose }: AboutDialogProps) {
     return (
         <Modal title="About CircuitJS" onClose={onClose} width={400}>
-            <div style={{ fontFamily: 'monospace', fontSize: '12px', color: '#CCC', lineHeight: '1.6' }}>
-                <h3 style={{ color: '#FFF', margin: '0 0 8px 0' }}>CircuitJS Next</h3>
-                <p style={{ margin: '0 0 12px 0' }}>
+            <div className="font-mono text-circuit-base text-circuit-text-secondary leading-relaxed">
+                <h3 className="text-circuit-text text-circuit-lg font-semibold mb-2">CircuitJS Next</h3>
+                <p className="mb-3">
                     Circuit simulation in your browser.
                 </p>
-                <p style={{ margin: '0 0 12px 0' }}>
+                <p className="mb-3">
                     Originally created by Paul Falstad.<br />
                     Ported to TypeScript/React.
                 </p>
-                <p style={{ margin: '0 0 16px 0', color: '#888' }}>
+                <p className="mb-4 text-circuit-text-muted">
                     Version 0.1.0
                 </p>
-                <div style={{ textAlign: 'center' }}>
+                <div className="text-center">
                     <button
                         onClick={onClose}
-                        style={{
-                            padding: '6px 24px',
-                            backgroundColor: '#333',
-                            color: '#FFF',
-                            border: '1px solid #555',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-6 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
                         OK
                     </button>

@@ -16,7 +16,6 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
     const scope = scopes[scopeIndex];
     if (!scope) return null;
 
-    // Local state for settings
     const [speed, setSpeed] = useState(scope.speed);
     const [plotBindings, setPlotBindings] = useState(
         scope.plots.map((p) => ({
@@ -33,7 +32,6 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
     const [showScale, setShowScale] = useState(scope.showScale);
     const [logSpectrum, setLogSpectrum] = useState(scope.logSpectrum);
 
-    // Available components for binding
     const availableComponents = useMemo(() => {
         return components.filter((c) => c.volts.length > 0);
     }, [components]);
@@ -76,32 +74,32 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
 
     return (
         <Modal title={`Scope ${scopeIndex + 1} Configuration`} onClose={onClose} width={420}>
-            <div style={{ fontFamily: 'monospace', fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="font-mono text-circuit-base flex flex-col gap-3">
                 {/* Timebase speed */}
                 <div>
-                    <div style={{ color: '#CCC', marginBottom: '4px' }}>Timebase Speed</div>
+                    <div className="text-circuit-text-secondary mb-1">Timebase Speed</div>
                     <input
                         type="range"
                         min={1}
                         max={512}
                         value={speed}
                         onChange={(e) => setSpeed(parseInt(e.target.value))}
-                        style={{ width: '100%', accentColor: '#2980b9' }}
+                        className="w-full accent-circuit-accent"
                     />
-                    <span style={{ color: '#888', fontSize: '10px' }}>{speed}</span>
+                    <span className="text-circuit-text-muted text-circuit-xs">{speed}</span>
                 </div>
 
                 {/* Plot bindings */}
                 {plotBindings.map((binding, i) => (
-                    <div key={i} style={{ padding: '8px', backgroundColor: '#2a2a2a', borderRadius: '4px' }}>
-                        <div style={{ color: '#CCC', marginBottom: '6px' }}>Channel {i + 1}</div>
+                    <div key={i} className="p-2 bg-circuit-bg-tertiary rounded">
+                        <div className="text-circuit-text-secondary mb-1.5">Channel {i + 1}</div>
 
-                        <div style={{ marginBottom: '6px' }}>
-                            <div style={{ color: '#888', fontSize: '10px', marginBottom: '2px' }}>Component</div>
+                        <div className="mb-1.5">
+                            <div className="text-circuit-text-muted text-circuit-xs mb-0.5">Component</div>
                             <select
                                 value={binding.componentId}
                                 onChange={(e) => updatePlotBinding(i, 'componentId', parseInt(e.target.value))}
-                                style={selectStyle}
+                                className="w-full px-1.5 py-1 bg-circuit-bg-canvas text-circuit-text border border-circuit-border-light rounded font-mono text-circuit-sm cursor-pointer outline-none box-border"
                             >
                                 <option value={-1}>— None —</option>
                                 {availableComponents.map((c) => (
@@ -112,25 +110,25 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
                             </select>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ color: '#888', fontSize: '10px', marginBottom: '2px' }}>Y Scale (V/div)</div>
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <div className="text-circuit-text-muted text-circuit-xs mb-0.5">Y Scale (V/div)</div>
                                 <input
                                     type="number"
                                     value={binding.scale}
                                     onChange={(e) => updatePlotBinding(i, 'scale', parseFloat(e.target.value) || 1)}
-                                    style={inputStyle}
+                                    className="w-full px-1.5 py-1 bg-circuit-bg-canvas text-circuit-text border border-circuit-border-light rounded font-mono text-circuit-sm outline-none box-border"
                                     min={0.1}
                                     step={0.1}
                                 />
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <div style={{ color: '#888', fontSize: '10px', marginBottom: '2px' }}>Y Offset</div>
+                            <div className="flex-1">
+                                <div className="text-circuit-text-muted text-circuit-xs mb-0.5">Y Offset</div>
                                 <input
                                     type="number"
                                     value={binding.offset}
                                     onChange={(e) => updatePlotBinding(i, 'offset', parseFloat(e.target.value) || 0)}
-                                    style={inputStyle}
+                                    className="w-full px-1.5 py-1 bg-circuit-bg-canvas text-circuit-text border border-circuit-border-light rounded font-mono text-circuit-sm outline-none box-border"
                                     step={0.1}
                                 />
                             </div>
@@ -139,9 +137,9 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
                 ))}
 
                 {/* Display options */}
-                <div style={{ padding: '8px', backgroundColor: '#2a2a2a', borderRadius: '4px' }}>
-                    <div style={{ color: '#CCC', marginBottom: '6px' }}>Display Options</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+                <div className="p-2 bg-circuit-bg-tertiary rounded">
+                    <div className="text-circuit-text-secondary mb-1.5">Display Options</div>
+                    <div className="grid grid-cols-2 gap-1">
                         {[
                             { label: 'Show Max', value: showMax, set: setShowMax },
                             { label: 'Show Min', value: showMin, set: setShowMin },
@@ -151,12 +149,12 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
                             { label: 'Show Scale', value: showScale, set: setShowScale },
                             { label: 'Log Spectrum', value: logSpectrum, set: setLogSpectrum },
                         ].map((opt) => (
-                            <label key={opt.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#CCC', cursor: 'pointer' }}>
+                            <label key={opt.label} className="flex items-center gap-1.5 text-circuit-text-secondary cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={opt.value}
                                     onChange={(e) => opt.set(e.target.checked)}
-                                    style={{ accentColor: '#2980b9' }}
+                                    className="accent-circuit-accent"
                                 />
                                 {opt.label}
                             </label>
@@ -165,46 +163,12 @@ export function ScopeConfigDialog({ scopeIndex, onClose }: ScopeConfigDialogProp
                 </div>
 
                 {/* Buttons */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-                    <button onClick={handleApply} style={btnStyle}>Apply</button>
-                    <button onClick={handleOk} style={primaryBtnStyle}>OK</button>
-                    <button onClick={onClose} style={btnStyle}>Cancel</button>
+                <div className="flex justify-end gap-2 mt-2">
+                    <button onClick={handleApply} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Apply</button>
+                    <button onClick={handleOk} className="px-4 py-1.5 bg-circuit-accent-bg text-circuit-text border border-accent rounded cursor-pointer font-mono text-circuit-base">OK</button>
+                    <button onClick={onClose} className="px-4 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base">Cancel</button>
                 </div>
             </div>
         </Modal>
     );
 }
-
-const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '4px 6px',
-    backgroundColor: '#111',
-    color: '#FFF',
-    border: '1px solid #555',
-    borderRadius: '3px',
-    fontFamily: 'monospace',
-    fontSize: '11px',
-    boxSizing: 'border-box',
-};
-
-const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-    cursor: 'pointer',
-};
-
-const btnStyle: React.CSSProperties = {
-    padding: '6px 16px',
-    backgroundColor: '#333',
-    color: '#FFF',
-    border: '1px solid #555',
-    borderRadius: '3px',
-    cursor: 'pointer',
-    fontFamily: 'monospace',
-    fontSize: '12px',
-};
-
-const primaryBtnStyle: React.CSSProperties = {
-    ...btnStyle,
-    backgroundColor: '#1a5276',
-    borderColor: '#2980b9',
-};

@@ -33,40 +33,29 @@ const shortcuts: ShortcutEntry[] = [
 export function ShortcutsDialog({ onClose }: ShortcutsDialogProps) {
     return (
         <Modal title="Keyboard Shortcuts" onClose={onClose} width={450}>
-            <div style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div className="font-mono text-circuit-base">
+                <table className="w-full border-collapse">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid #444' }}>
-                            <th style={{ textAlign: 'left', padding: '6px 12px', color: '#888', fontWeight: 'normal' }}>Key</th>
-                            <th style={{ textAlign: 'left', padding: '6px 12px', color: '#888', fontWeight: 'normal' }}>Action</th>
+                        <tr className="border-b border-circuit-border">
+                            <th className="text-left px-3 py-1.5 text-circuit-text-muted font-normal">Key</th>
+                            <th className="text-left px-3 py-1.5 text-circuit-text-muted font-normal">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {shortcuts.map((s, i) => (
-                            <tr key={i} style={{ borderBottom: '1px solid #2a2a2a' }}>
-                                <td style={{ padding: '5px 12px', color: '#FFD700', whiteSpace: 'nowrap' }}>
+                            <tr key={i} className="border-b border-[#2a2a2a]">
+                                <td className="px-3 py-1 whitespace-nowrap" style={{ color: '#FFD700' }}>
                                     {s.key}
                                 </td>
-                                <td style={{ padding: '5px 12px', color: '#CCC' }}>
-                                    {s.description}
-                                </td>
+                                <td className="px-3 py-1 text-circuit-text-secondary">{s.description}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                <div className="text-center mt-4">
                     <button
                         onClick={onClose}
-                        style={{
-                            padding: '6px 24px',
-                            backgroundColor: '#333',
-                            color: '#FFF',
-                            border: '1px solid #555',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            fontFamily: 'monospace',
-                            fontSize: '12px',
-                        }}
+                        className="px-6 py-1.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-base"
                     >
                         OK
                     </button>

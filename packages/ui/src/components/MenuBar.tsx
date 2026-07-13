@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback } from 'react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { ChevronRight } from 'lucide-react';
 import { useCircuitStore } from '../store/circuitStore.js';
 
-// ─── Component category mapping ────────────────────────────────────────────
-// Maps component register names to display labels and menu categories.
-// Derived from the original Java menu structure.
 interface ComponentEntry {
     label: string;
-    name: string; // register name (e.g. "ResistorElm")
+    name: string;
 }
 
 const PASSIVE_COMPONENTS: ComponentEntry[] = [
@@ -150,136 +149,24 @@ const DRAW_CATEGORIES: CategoryGroup[] = [
     { label: 'Electromechanical', items: ELECTROMECHANICAL_COMPONENTS },
 ];
 
-// ─── Menu item types ───────────────────────────────────────────────────────
+// ─── Radix menu class helpers ─────────────────────────────────────────────
 
-interface MenuSeparator {
-    type: 'separator';
-}
+const itemClass =
+    'relative flex cursor-pointer select-none items-center gap-2 rounded-none ' +
+    'px-3.5 py-1 text-circuit-base text-foreground outline-none ' +
+    'data-[disabled]:pointer-events-none data-[disabled]:opacity-40 ' +
+    'data-[highlighted]:bg-circuit-bg-hover font-mono';
 
-interface MenuItemAction {
-    type: 'action';
-    label: string;
-    action: () => void;
-    disabled?: boolean;
-    checked?: boolean;
-}
+const subTriggerClass =
+    itemClass +
+    ' data-[state=open]:bg-circuit-bg-hover';
 
-interface SubMenu {
-    type: 'submenu';
-    label: string;
-    items: (MenuItemAction | MenuSeparator | SubMenu)[];
-}
+const contentClass =
+    'z-50 min-w-[180px] max-h-[70vh] overflow-y-auto rounded-md ' +
+    'border border-circuit-border-light bg-circuit-bg-tertiary p-1 ' +
+    'shadow-[2px_2px_8px_rgba(0,0,0,0.5)] font-mono';
 
-type MenuItem = MenuItemAction | MenuSeparator | SubMenu;
-
-interface MenuDef {
-    label: string;
-    items: MenuItem[];
-}
-
-// ─── Style constants ───────────────────────────────────────────────────────
-
-const menuBarStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    borderBottom: '1px solid #333',
-    userSelect: 'none',
-    height: '30px',
-};
-
-const menuHeaderStyle: React.CSSProperties = {
-    padding: '0 10px',
-    height: '30px',
-    lineHeight: '30px',
-    color: '#CCC',
-    fontFamily: 'monospace',
-    fontSize: '13px',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-};
-
-const dropdownStyle: React.CSSProperties = {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    minWidth: '180px',
-    backgroundColor: '#2a2a2a',
-    border: '1px solid #555',
-    borderRadius: '4px',
-    boxShadow: '2px 2px 8px rgba(0,0,0,0.5)',
-    zIndex: 2000,
-    padding: '4px 0',
-};
-
-const dropdownItemStyle: React.CSSProperties = {
-    padding: '4px 14px',
-    color: '#FFF',
-    fontFamily: 'monospace',
-    fontSize: '12px',
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-};
-
-const shortcutStyle: React.CSSProperties = {
-    color: '#666',
-    marginLeft: '20px',
-    fontSize: '11px',
-};
-
-const separatorStyle: React.CSSProperties = {
-    height: '1px',
-    backgroundColor: '#444',
-    margin: '4px 8px',
-};
-
-const submenuArrowStyle: React.CSSProperties = {
-    marginLeft: '16px',
-    color: '#888',
-};
-
-const submenuContainerStyle: React.CSSProperties = {
-    position: 'relative',
-};
-
-const submenuDropdownStyle: React.CSSProperties = {
-    ...dropdownStyle,
-    position: 'absolute',
-    left: '100%',
-    top: '-4px',
-};
-
-const controlBarStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    marginLeft: 'auto',
-    padding: '0 10px',
-};
-
-const btnStyle: React.CSSProperties = {
-    padding: '2px 10px',
-    backgroundColor: '#333',
-    color: '#FFF',
-    border: '1px solid #555',
-    borderRadius: '3px',
-    cursor: 'pointer',
-    fontFamily: 'monospace',
-    fontSize: '11px',
-    height: '22px',
-};
-
-const timeDisplayStyle: React.CSSProperties = {
-    color: '#888',
-    fontFamily: 'monospace',
-    fontSize: '11px',
-    marginLeft: '8px',
-};
-
-// ─── MenuBar component ─────────────────────────────────────────────────────
+// ─── Props ─────────────────────────────────────────────────────────────────
 
 export interface MenuBarProps {
     onAddComponentType?: (type: string | null) => void;
@@ -300,6 +187,8 @@ export interface MenuBarProps {
     simLoaded?: boolean;
 }
 
+// ─── MenuBar ────────────────────────────────────────────────────────────────
+
 export function MenuBar({
     onAddComponentType,
     onUndo,
@@ -318,9 +207,6 @@ export function MenuBar({
     running,
     simLoaded,
 }: MenuBarProps) {
-    const [openMenu, setOpenMenu] = useState<string | null>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-
     const store = useCircuitStore();
     const canUndo = useCircuitStore((s) => s.canUndo);
     const canRedo = useCircuitStore((s) => s.canRedo);
@@ -332,295 +218,201 @@ export function MenuBar({
     const showSliders = useCircuitStore((s) => s.showSliders);
     const time = useCircuitStore((s) => s.time);
 
-    // Close dropdown on outside click
-    useEffect(() => {
-        if (!openMenu) return;
-        const close = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                setOpenMenu(null);
-            }
-        };
-        // Delay to avoid the opening click itself
-        const id = setTimeout(() => {
-            window.addEventListener('click', close);
-        }, 0);
-        return () => {
-            clearTimeout(id);
-            window.removeEventListener('click', close);
-        };
-    }, [openMenu]);
-
-    const toggleMenu = useCallback((label: string) => {
-        setOpenMenu((prev) => (prev === label ? null : label));
-    }, []);
-
-    const closeMenu = useCallback(() => {
-        setOpenMenu(null);
-    }, []);
-
     const handleComponentSelect = useCallback((typeName: string) => {
         onAddComponentType?.(typeName);
-        closeMenu();
-    }, [onAddComponentType, closeMenu]);
+    }, [onAddComponentType]);
 
-    const handleAction = useCallback((action: string, fn?: () => void) => {
-        return () => {
-            fn?.();
-            // Only close menu for single actions, not toggles
-            if (action !== 'toggle') closeMenu();
-        };
-    }, [closeMenu]);
+    // ── Render helpers ───────────────────────────────────────────────────────
 
-    function renderMenuItems(items: MenuItem[]): React.ReactNode[] {
-        return items.map((item, i) => {
-            if (item.type === 'separator') {
-                return <div key={`sep-${i}`} style={separatorStyle} />;
-            }
-            if (item.type === 'submenu') {
-                return (
-                    <SubmenuItem key={`sub-${i}`} label={item.label} items={item.items} onSelect={handleComponentSelect} onAction={handleAction} />
-                );
-            }
-            const actionItem = item as MenuItemAction;
-            return (
-                <div
-                    key={`action-${i}`}
-                    style={{
-                        ...dropdownItemStyle,
-                        opacity: actionItem.disabled ? 0.4 : 1,
-                        cursor: actionItem.disabled ? 'default' : 'pointer',
-                    }}
-                    onClick={(e) => {
-                        if (actionItem.disabled) return;
-                        e.stopPropagation();
-                        actionItem.action();
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!actionItem.disabled) e.currentTarget.style.backgroundColor = '#444';
-                    }}
-                    onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                >
-                    <span>
-                        {actionItem.checked !== undefined && (
-                            <span style={{ width: '16px', display: 'inline-block', color: actionItem.checked ? '#4A4' : '#555' }}>
-                                {actionItem.checked ? '✓' : ' '}
-                            </span>
-                        )}
-                        {actionItem.checked !== undefined ? actionItem.label :
-                            <span style={{ marginLeft: '16px' }}>{actionItem.label}</span>
-                        }
-                    </span>
-                </div>
-            );
-        });
+    function renderComponentSubmenu(cat: CategoryGroup) {
+        return (
+            <DropdownMenu.Sub key={cat.label}>
+                <DropdownMenu.SubTrigger className={subTriggerClass}>
+                    {cat.label}
+                    <ChevronRight className="ml-auto h-3 w-3 text-circuit-text-dim" />
+                </DropdownMenu.SubTrigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.SubContent
+                        className={contentClass}
+                        sideOffset={4}
+                        collisionPadding={10}
+                    >
+                        {cat.items.map((entry) => (
+                            <DropdownMenu.Item
+                                key={entry.name}
+                                className={itemClass}
+                                onSelect={() => handleComponentSelect(entry.name)}
+                            >
+                                {entry.label}
+                            </DropdownMenu.Item>
+                        ))}
+                    </DropdownMenu.SubContent>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Sub>
+        );
     }
 
-    // ── Define menus ───────────────────────────────────────────────────────
+    function renderItem(label: string, onClick: () => void, disabled = false) {
+        return (
+            <DropdownMenu.Item
+                disabled={disabled}
+                className={itemClass}
+                onSelect={onClick}
+            >
+                {label}
+            </DropdownMenu.Item>
+        );
+    }
 
-    const fileMenuItems: MenuItem[] = [
-        {
-            type: 'action' as const, label: 'New Circuit', action: () => handleAction('new', onNewCircuit)()
-                ?? onNewCircuit?.() ?? closeMenu(),
-        },
-        {
-            type: 'action' as const, label: 'Open File...', action: () => handleAction('open', onOpenFile)()
-                ?? onOpenFile?.() ?? closeMenu(),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Import From Text...', action: () => handleAction('import', onImportText)()
-                ?? onImportText?.() ?? closeMenu(),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Examples...', action: () => handleAction('examples', onShowExamples)()
-                ?? onShowExamples?.() ?? closeMenu(),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Export As Text...', action: () => handleAction('export-text', onExportText)()
-                ?? onExportText?.() ?? closeMenu(),
-        },
-        {
-            type: 'action' as const, label: 'Export As URL...', action: () => handleAction('export-url', onExportUrl)()
-                ?? onExportUrl?.() ?? closeMenu(),
-        },
-        {
-            type: 'action' as const, label: 'Export As Image...', action: () => handleAction('export-image', onExportImage)()
-                ?? onExportImage?.() ?? closeMenu(),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'About', action: () => handleAction('about', onShowAbout)()
-                ?? onShowAbout?.() ?? closeMenu(),
-        },
-    ];
+    function renderCheckItem(label: string, checked: boolean, onToggle: () => void) {
+        return (
+            <DropdownMenu.CheckboxItem
+                checked={checked}
+                className={itemClass}
+                onSelect={(e) => {
+                    e.preventDefault();
+                    onToggle();
+                }}
+            >
+                <DropdownMenu.ItemIndicator>
+                    <span className="w-4 text-center text-circuit-success">✓</span>
+                </DropdownMenu.ItemIndicator>
+                {!checked && <span className="w-4" />}
+                {label}
+            </DropdownMenu.CheckboxItem>
+        );
+    }
 
-    const editMenuItems: MenuItem[] = [
-        {
-            type: 'action' as const, label: 'Undo', action: () => onUndo?.() ?? closeMenu(),
-            disabled: !canUndo,
-        },
-        {
-            type: 'action' as const, label: 'Redo', action: () => onRedo?.() ?? closeMenu(),
-            disabled: !canRedo,
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Cut', action: () => {
-                onEditMenuAction?.('cut'); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-        {
-            type: 'action' as const, label: 'Copy', action: () => {
-                onEditMenuAction?.('copy'); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-        {
-            type: 'action' as const, label: 'Paste', action: () => {
-                onEditMenuAction?.('paste'); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Select All', action: () => {
-                onEditMenuAction?.('select_all'); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-        {
-            type: 'action' as const, label: 'Delete', action: () => {
-                onEditMenuAction?.('delete'); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-        {
-            type: 'action' as const, label: 'Center Circuit', action: () => {
-                store.autoCenter(); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-    ];
-
-    const drawMenuItems: MenuItem[] = DRAW_CATEGORIES.map((cat) => ({
-        type: 'submenu' as const,
-        label: cat.label,
-        items: cat.items.map((entry) => ({
-            type: 'action' as const,
-            label: entry.label,
-            action: () => handleComponentSelect(entry.name),
-        })),
-    }));
-
-    const scopeMenuItems: MenuItem[] = [
-        {
-            type: 'action' as const, label: 'Add Scope', action: () => {
-                onScopeAction?.('add'); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-        {
-            type: 'action' as const, label: 'Remove Scope', action: () => {
-                onScopeAction?.('remove'); closeMenu();
-            },
-            disabled: !simLoaded,
-        },
-    ];
-
-    const optionsMenuItems: MenuItem[] = [
-        {
-            type: 'action' as const, label: 'Show Current', checked: showCurrent,
-            action: () => store.setShowCurrent(!showCurrent),
-        },
-        {
-            type: 'action' as const, label: 'Show Voltage', checked: showVoltageLabels,
-            action: () => store.setShowVoltageLabels(!showVoltageLabels),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Show Values', checked: showValues,
-            action: () => store.setShowValues(!showValues),
-        },
-        {
-            type: 'action' as const, label: 'Small Grid', checked: smallGrid,
-            action: () => store.setSmallGrid(!smallGrid),
-        },
-        {
-            type: 'action' as const, label: 'European Resistors', checked: euroResistors,
-            action: () => store.setEuroResistors(!euroResistors),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Show Sliders', checked: showSliders,
-            action: () => store.setShowSliders(!showSliders),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'Keyboard Shortcuts...', action: () => handleAction('shortcuts', onShowShortcuts)()
-                ?? onShowShortcuts?.() ?? closeMenu(),
-        },
-    ];
-
-    const helpMenuItems: MenuItem[] = [
-        {
-            type: 'action' as const, label: 'Keyboard Shortcuts...', action: () => handleAction('shortcuts', onShowShortcuts)()
-                ?? onShowShortcuts?.() ?? closeMenu(),
-        },
-        { type: 'separator' as const },
-        {
-            type: 'action' as const, label: 'About', action: () => handleAction('about', onShowAbout)()
-                ?? onShowAbout?.() ?? closeMenu(),
-        },
-    ];
-
-    const menus: { label: string; items: MenuItem[] }[] = [
-        { label: 'File', items: fileMenuItems },
-        { label: 'Edit', items: editMenuItems },
-        { label: 'Draw', items: drawMenuItems },
-        { label: 'Scope', items: scopeMenuItems },
-        { label: 'Options', items: optionsMenuItems },
-        { label: 'Help', items: helpMenuItems },
-    ];
+    // ── Menus ────────────────────────────────────────────────────────────────
 
     return (
-        <div ref={menuRef} style={menuBarStyle}>
-            {menus.map((menu) => (
-                <div key={menu.label} style={{ position: 'relative' }}>
-                    <div
-                        style={{
-                            ...menuHeaderStyle,
-                            backgroundColor: openMenu === menu.label ? '#333' : 'transparent',
-                        }}
-                        onMouseEnter={() => {
-                            // For submenu navigation when already open
-                        }}
-                        onClick={(e) => { e.stopPropagation(); toggleMenu(menu.label); }}
-                    >
-                        {menu.label}
-                    </div>
-                    {openMenu === menu.label && (
-                        <div style={dropdownStyle}>
-                            {renderMenuItems(menu.items)}
-                        </div>
-                    )}
-                </div>
-            ))}
+        <div className="flex items-center bg-circuit-bg-secondary border-b border-circuit-border select-none h-menu font-mono">
+            {/* File */}
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                    <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
+                        File
+                    </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content className={contentClass} sideOffset={0}>
+                        {renderItem('New Circuit', () => onNewCircuit?.())}
+                        {renderItem('Open File...', () => onOpenFile?.())}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('Import From Text...', () => onImportText?.())}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('Examples...', () => onShowExamples?.())}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('Export As Text...', () => onExportText?.())}
+                        {renderItem('Export As URL...', () => onExportUrl?.())}
+                        {renderItem('Export As Image...', () => onExportImage?.())}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('About', () => onShowAbout?.())}
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+
+            {/* Edit */}
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                    <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
+                        Edit
+                    </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content className={contentClass} sideOffset={0}>
+                        {renderItem('Undo', () => onUndo?.(), !canUndo)}
+                        {renderItem('Redo', () => onRedo?.(), !canRedo)}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('Cut', () => onEditMenuAction?.('cut'), !simLoaded)}
+                        {renderItem('Copy', () => onEditMenuAction?.('copy'), !simLoaded)}
+                        {renderItem('Paste', () => onEditMenuAction?.('paste'), !simLoaded)}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('Select All', () => onEditMenuAction?.('select_all'), !simLoaded)}
+                        {renderItem('Delete', () => onEditMenuAction?.('delete'), !simLoaded)}
+                        {renderItem('Center Circuit', () => store.autoCenter(), !simLoaded)}
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+
+            {/* Draw */}
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                    <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
+                        Draw
+                    </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content className={contentClass} sideOffset={0} align="start">
+                        {DRAW_CATEGORIES.map((cat) => renderComponentSubmenu(cat))}
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+
+            {/* Scope */}
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                    <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
+                        Scope
+                    </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content className={contentClass} sideOffset={0}>
+                        {renderItem('Add Scope', () => onScopeAction?.('add'), !simLoaded)}
+                        {renderItem('Remove Scope', () => onScopeAction?.('remove'), !simLoaded)}
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+
+            {/* Options */}
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                    <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
+                        Options
+                    </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content className={contentClass} sideOffset={0}>
+                        {renderCheckItem('Show Current', showCurrent, () => store.setShowCurrent(!showCurrent))}
+                        {renderCheckItem('Show Voltage', showVoltageLabels, () => store.setShowVoltageLabels(!showVoltageLabels))}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderCheckItem('Show Values', showValues, () => store.setShowValues(!showValues))}
+                        {renderCheckItem('Small Grid', smallGrid, () => store.setSmallGrid(!smallGrid))}
+                        {renderCheckItem('European Resistors', euroResistors, () => store.setEuroResistors(!euroResistors))}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderCheckItem('Show Sliders', showSliders, () => store.setShowSliders(!showSliders))}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('Keyboard Shortcuts...', () => onShowShortcuts?.())}
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+
+            {/* Help */}
+            <DropdownMenu.Root>
+                <DropdownMenu.Trigger asChild>
+                    <button className="px-2.5 h-menu text-circuit-text-secondary text-circuit-lg cursor-pointer whitespace-nowrap font-mono hover:bg-circuit-bg-active data-[state=open]:bg-circuit-bg-active">
+                        Help
+                    </button>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Portal>
+                    <DropdownMenu.Content className={contentClass} sideOffset={0}>
+                        {renderItem('Keyboard Shortcuts...', () => onShowShortcuts?.())}
+                        <DropdownMenu.Separator className="h-px bg-circuit-separator mx-2 my-1" />
+                        {renderItem('About', () => onShowAbout?.())}
+                    </DropdownMenu.Content>
+                </DropdownMenu.Portal>
+            </DropdownMenu.Root>
 
             {/* Simulation controls */}
-            <div style={controlBarStyle}>
+            <div className="flex items-center gap-1.5 ml-auto px-2.5">
                 <button
                     onClick={() => {
                         const s = useCircuitStore.getState();
                         if (s.running) { s.simManager?.stop(); s.setRunning(false); }
                         else { s.simManager?.start(); s.setRunning(true); }
                     }}
-                    style={btnStyle}
                     disabled={!simLoaded}
+                    className="px-2.5 py-0.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-sm h-[22px] disabled:opacity-40"
                 >
                     {running ? '■ Stop' : '▶ Start'}
                 </button>
@@ -631,92 +423,17 @@ export function MenuBar({
                         s.simManager.runSteps(100);
                         s.setTime(s.simManager.getTime());
                     }}
-                    style={btnStyle}
                     disabled={!simLoaded || running}
+                    className="px-2.5 py-0.5 bg-circuit-bg-tertiary text-circuit-text border border-circuit-border-light rounded cursor-pointer font-mono text-circuit-sm h-[22px] disabled:opacity-40"
                 >
-                    ⏭ Step
+                    {'⏭'} Step
                 </button>
                 {simLoaded && (
-                    <span style={timeDisplayStyle}>
+                    <span className="text-circuit-text-muted font-mono text-circuit-sm ml-2">
                         t={time.toExponential(3)}s
                     </span>
                 )}
             </div>
-        </div>
-    );
-}
-
-// ─── Submenu item (for nested menus) ───────────────────────────────────────
-
-function SubmenuItem({
-    label,
-    items,
-    onSelect,
-    onAction,
-}: {
-    label: string;
-    items: MenuItem[];
-    onSelect: (name: string) => void;
-    onAction: (action: string, fn?: () => void) => () => void;
-}) {
-    const [open, setOpen] = useState(false);
-    const itemRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        if (!open) return;
-        const close = (e: MouseEvent) => {
-            if (itemRef.current && !itemRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
-        };
-        setTimeout(() => window.addEventListener('click', close), 0);
-        return () => window.removeEventListener('click', close);
-    }, [open]);
-
-    function renderSubItems(subitems: MenuItem[]): React.ReactNode[] {
-        return subitems.map((item, i) => {
-            if (item.type === 'separator') {
-                return <div key={`ss-${i}`} style={separatorStyle} />;
-            }
-            if (item.type === 'submenu') {
-                return (
-                    <SubmenuItem key={`ss-${i}`} label={item.label} items={item.items} onSelect={onSelect} onAction={onAction} />
-                );
-            }
-            const actionItem = item as MenuItemAction;
-            return (
-                <div
-                    key={`ss-${i}`}
-                    style={dropdownItemStyle}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        actionItem.action();
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#444'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                >
-                    {actionItem.label}
-                </div>
-            );
-        });
-    }
-
-    return (
-        <div ref={itemRef} style={submenuContainerStyle}>
-            <div
-                style={dropdownItemStyle}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#444'; setOpen(true); }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-            >
-                <span style={{ marginLeft: '16px' }}>{label}</span>
-                <span style={submenuArrowStyle}>▸</span>
-            </div>
-            {open && (
-                <div style={submenuDropdownStyle}>
-                    {renderSubItems(items)}
-                </div>
-            )}
         </div>
     );
 }

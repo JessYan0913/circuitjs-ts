@@ -1,62 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-
-const backdropStyle: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2000,
-};
-
-const dialogStyle: React.CSSProperties = {
-    backgroundColor: '#1e1e1e',
-    border: '1px solid #444',
-    borderRadius: '6px',
-    padding: '0',
-    minWidth: '320px',
-    maxWidth: '600px',
-    maxHeight: '80vh',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-};
-
-const titleBarStyle: React.CSSProperties = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px 16px',
-    borderBottom: '1px solid #333',
-    userSelect: 'none',
-};
-
-const titleStyle: React.CSSProperties = {
-    margin: 0,
-    color: '#FFF',
-    fontSize: '14px',
-    fontWeight: 600,
-    fontFamily: 'monospace',
-};
-
-const closeBtnStyle: React.CSSProperties = {
-    background: 'none',
-    border: 'none',
-    color: '#888',
-    cursor: 'pointer',
-    fontSize: '16px',
-    padding: '2px 6px',
-    borderRadius: '3px',
-    fontFamily: 'monospace',
-};
-
-const bodyStyle: React.CSSProperties = {
-    padding: '16px',
-    overflow: 'auto',
-    flex: 1,
-};
+import * as Dialog from '@radix-ui/react-dialog';
+import { X } from 'lucide-react';
 
 export interface ModalProps {
     title: string;
@@ -66,40 +9,37 @@ export interface ModalProps {
 }
 
 export function Modal({ title, onClose, children, width }: ModalProps) {
-    const backdropRef = useRef<HTMLDivElement>(null);
-
-    // Close on Escape
-    useEffect(() => {
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
-    }, [onClose]);
-
-    const handleBackdropClick = (e: React.MouseEvent) => {
-        if (e.target === backdropRef.current) onClose();
-    };
-
-    return createPortal(
-        <div ref={backdropRef} style={backdropStyle} onClick={handleBackdropClick}>
-            <div style={{ ...dialogStyle, width: width ?? 'auto' }}>
-                <div style={titleBarStyle}>
-                    <h3 style={titleStyle}>{title}</h3>
-                    <button
-                        style={closeBtnStyle}
-                        onClick={onClose}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = '#FFF'; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = '#888'; }}
-                    >
-                        ✕
-                    </button>
-                </div>
-                <div style={bodyStyle}>
-                    {children}
-                </div>
-            </div>
-        </div>,
-        document.body,
+    return (
+        <Dialog.Root open onOpenChange={(open) => { if (!open) onClose(); }}>
+            <Dialog.Portal>
+                <Dialog.Overlay className="fixed inset-0 bg-black/60 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out" />
+                <Dialog.Content
+                    style={{ maxWidth: width ? `${width}px` : '600px' }}
+                    className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+                               bg-[#1e1e1e] border border-[#444] rounded-md
+                               shadow-[0_8px_32px_rgba(0,0,0,0.5)]
+                               w-full max-h-[80vh] flex flex-col
+                               z-50 data-[state=open]:animate-in data-[state=closed]:animate-out"
+                    onEscapeKeyDown={onClose}
+                    onPointerDownOutside={onClose}
+                >
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#333] select-none">
+                        <Dialog.Title className="m-0 text-white text-circuit-xl font-semibold font-mono">
+                            {title}
+                        </Dialog.Title>
+                        <Dialog.Close
+                            className="text-circuit-text-muted hover:text-white
+                                       bg-transparent border-none cursor-pointer
+                                       rounded p-0.5 inline-flex items-center justify-center"
+                        >
+                            <X className="h-4 w-4" />
+                        </Dialog.Close>
+                    </div>
+                    <div className="p-4 overflow-auto flex-1">
+                        {children}
+                    </div>
+                </Dialog.Content>
+            </Dialog.Portal>
+        </Dialog.Root>
     );
 }
