@@ -193,16 +193,24 @@ export class CircuitRenderer {
     private drawLabels(ctx: CanvasRenderingContext2D, comps: CircuitComponent[]): void {
         ctx.font = '11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
+        ctx.textBaseline = 'middle';
         for (const c of comps) {
             if (c.isWire() || c.isGraphicElm()) continue;
-            const info = c.getInfo();
-            if (!info.length) continue;
+            const label = c.getCanvasLabel();
+            if (!label) continue;
             const cx = (c.x + c.x2) / 2;
             const cy = (c.y + c.y2) / 2;
-            const offY = (c.y2 - c.y) < 0 ? -16 : 16;
+            const dx = c.x2 - c.x;
+            const dy = c.y2 - c.y;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const w = ctx.measureText(label).width;
+            // Symbol half-size estimate: 16px (covers circles, ground bars, etc.)
+            const symbolHs = 16;
+            const totalOffset = symbolHs + 4 + w / 2;
+            const offX = Math.round(-dy / len * totalOffset);
+            const offY = Math.round(dx / len * totalOffset);
             ctx.fillStyle = '#888';
-            ctx.fillText(info[0], cx, cy + offY);
+            ctx.fillText(label, cx + offX, cy + offY);
         }
     }
 

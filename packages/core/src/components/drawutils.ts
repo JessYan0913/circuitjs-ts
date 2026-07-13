@@ -156,10 +156,12 @@ export function drawValues(g: Graphics, s: string, hs: number, p1: Point, p2: Po
     const cy = Math.round((p1.y + p2.y) / 2);
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
-    // Position label perpendicular to the component, offset by hs
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const offX = Math.round(-dy / len * (hs + 2));
-    const offY = Math.round(dx / len * (hs + 2));
+    // Include half the text width so the near edge of the label clears the symbol by 4px
+    const w = g.measureWidth(s);
+    const totalOffset = hs + 4 + w / 2;
+    const offX = Math.round(-dy / len * totalOffset);
+    const offY = Math.round(dx / len * totalOffset);
     g.setColor('#AAAAAA');
     g.textAlign('center');
     g.textBaseline('middle');

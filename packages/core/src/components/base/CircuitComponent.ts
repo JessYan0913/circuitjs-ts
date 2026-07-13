@@ -114,6 +114,10 @@ export abstract class CircuitComponent {
      * where currentMult = 1.7 * frameMs * exp(currentSpeed/3.5 - 14.2)
      */
     updateCurcount(currentMult: number): void {
+        if (Math.abs(this.current) < 1e-12) {
+            this.curcount = 0;
+            return;
+        }
         let cadd = this.current * currentMult;
         cadd %= 8;
         this.curcount += cadd;
@@ -575,6 +579,7 @@ export abstract class CircuitComponent {
     getEditInfo(_n: number): EditInfo | null { return null; }
     setEditValue(_n: number, _ei: EditInfo): void { /* no-op */ }
     getInfo(): string[] { return []; }
+    getCanvasLabel(): string | null { return null; }
 }
 
 export type ComponentConstructor = new (args: { x: number; y: number; x2?: number; y2?: number; flags?: number }) => CircuitComponent;

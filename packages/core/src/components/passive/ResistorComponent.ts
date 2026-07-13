@@ -83,7 +83,7 @@ export class ResistorComponent extends CircuitComponent {
         const val = this.resistance >= 1000
             ? `${(this.resistance / 1000).toFixed(1)}k`
             : `${this.resistance}`;
-        drawValues(g, val, hs + 2, this.point1, this.point2);
+        drawValues(g, val, hs, this.point1, this.point2);
 
         // Posts and current dots
         drawDots(g, this.point1, this.lead1, this.curcount);

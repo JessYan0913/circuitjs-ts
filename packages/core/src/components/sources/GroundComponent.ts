@@ -30,6 +30,8 @@ export class GroundComponent extends CircuitComponent {
         return ['Ground'];
     }
 
+    override getCanvasLabel(): string | null { return 'Ground'; }
+
     getShortcut(): number { return 'g'.charCodeAt(0); }
 
     draw(g: Graphics): void {

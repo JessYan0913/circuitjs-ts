@@ -101,6 +101,8 @@ export class VoltageComponent extends CircuitComponent {
         return [`${this.waveform === WF_DC ? 'DC' : 'AC'} Voltage: ${this.maxVoltage} V`];
     }
 
+    override getCanvasLabel(): string | null { return this.getInfo()[0]; }
+
     getShortcut(): number { return 'v'.charCodeAt(0); }
 
     setPoints(): void {
