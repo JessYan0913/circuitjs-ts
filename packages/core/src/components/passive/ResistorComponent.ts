@@ -87,7 +87,7 @@ export class ResistorComponent extends CircuitComponent {
 
         // Posts and current dots
         drawDots(g, this.point1, this.lead1, this.curcount);
-        drawDots(g, this.lead2, this.point2, -this.curcount);
+        drawDots(g, this.lead2, this.point2, this.curcount);
         drawPost(g, this.point1);
         drawPost(g, this.point2);
     }

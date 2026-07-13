@@ -13,18 +13,27 @@ export class RailComponent extends VoltageComponent {
     getDumpType(): number | string { return 'R'; }
 
     // Rail uses only 1 terminal (other is GND)
+    // n1=0 (GND), n2=nodes[0]: V(nodes[0]) - V(0) = voltage → correct polarity
     stamp(context: StampContext): void {
         if (this.waveform === WF_DC) {
-            context.stampVoltageSource(this.nodes[0], 0, this.voltSource, this.getVoltage());
+            context.stampVoltageSource(0, this.nodes[0], this.voltSource, this.getVoltage());
         } else {
-            context.stampVoltageSource(this.nodes[0], 0, this.voltSource);
+            context.stampVoltageSource(0, this.nodes[0], this.voltSource);
         }
     }
 
     doStep(context: StampContext): void {
         if (this.waveform !== WF_DC) {
-            context.updateVoltageSource(this.nodes[0], 0, this.voltSource, this.getVoltage());
+            context.updateVoltageSource(0, this.nodes[0], this.voltSource, this.getVoltage());
         }
+    }
+
+    // Java RailElm.draw() uses updateDotCount(-current, curcount) — negate to get
+    // conventional current direction in the external wire (out of positive terminal)
+    override updateCurcount(currentMult: number): void {
+        let cadd = -this.current * currentMult;
+        cadd %= 8;
+        this.curcount += cadd;
     }
 
     getInfo(): string[] {

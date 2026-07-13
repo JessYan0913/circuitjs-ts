@@ -92,6 +92,17 @@ export class MBBSwitchComponent extends SwitchComponent {
         }
     }
 
+    updateCurcount(currentMult: number): void {
+        for (let i = 0; i < 2; i++) {
+            let cadd = this.currents[i] * currentMult;
+            cadd %= 8;
+            this.curcounts[i] += cadd;
+        }
+        let cadd = (this.currents[0] + this.currents[1]) * currentMult;
+        cadd %= 8;
+        this.curcounts[2] += cadd;
+    }
+
     getVoltageSourceCount(): number {
         this.both = (this.position === 1 || this.position === 3);
         return this.both ? 2 : 1;

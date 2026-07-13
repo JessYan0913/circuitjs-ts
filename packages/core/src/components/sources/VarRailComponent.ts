@@ -56,13 +56,12 @@ export class VarRailComponent extends RailComponent implements Adjustable {
     }
 
     override stamp(context: StampContext): void {
-        // Always use DC stamping with variable voltage
-        context.stampVoltageSource(this.nodes[0], 0, this.voltSource, this.getVoltage());
+        // n1=0 (GND), n2=nodes[0]: V(nodes[0]) = voltage (correct polarity)
+        context.stampVoltageSource(0, this.nodes[0], this.voltSource, this.getVoltage());
     }
 
     override doStep(context: StampContext): void {
-        // Update voltage each step from slider
-        context.updateVoltageSource(this.nodes[0], 0, this.voltSource, this.getVoltage());
+        context.updateVoltageSource(0, this.nodes[0], this.voltSource, this.getVoltage());
     }
 
     override setPoints(): void {

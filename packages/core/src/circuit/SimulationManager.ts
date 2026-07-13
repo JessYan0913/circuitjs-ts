@@ -190,38 +190,83 @@ export class SimulationManager {
 
     /**
      * Build neighbor lists for wire current calculation.
-     * For each wire, find which other components are connected to its endpoints
-     * (matched by post coordinates). Neighbor currents are summed to determine
-     * wire current. Matches Java calcWireInfo().
+     * Matches Java CirSim.calcWireInfo() exactly:
+     * - Uses node-based lookup (like Java's cn1.links)
+     * - Allows already-resolved wires as neighbors (hasWireInfo flag)
+     * - Requeues wires whose neighbors aren't resolved yet (dependency order)
      */
     private buildWireNeighbors(): void {
-        for (const wi of this.wireInfoList) {
+        // Build node → [{elm, postIndex}] map — equivalent to Java's CircuitNode.links
+        const nodeLinks = new Map<number, Array<{ elm: CircuitComponent; num: number }>>();
+        for (const c of this.components) {
+            for (let j = 0; j < c.getPostCount(); j++) {
+                const n = c.nodes[j];
+                if (!nodeLinks.has(n)) nodeLinks.set(n, []);
+                nodeLinks.get(n)!.push({ elm: c, num: j });
+            }
+        }
+
+        // Tracks which wires have resolved current — matches Java WireElm.hasWireInfo
+        const hasWireInfo = new Set<CircuitComponent>();
+
+        let moved = 0;
+        let i = 0;
+        while (i < this.wireInfoList.length) {
+            const wi = this.wireInfoList[i];
             const wire = wi.wire;
-            const p0 = wire.getPost(0);
-            const p1 = wire.getPost(1);
+            // Both posts of a wire share the same node (Union-Find merged them)
+            const wireNode = wire.nodes[0];
 
             const neighbors0: CircuitComponent[] = [];
             const neighbors1: CircuitComponent[] = [];
+            let isReady0 = true;
+            let isReady1 = true;
 
-            for (const c of this.components) {
-                if (c === wire || c.isWire()) continue;
-                for (let j = 0; j < c.getPostCount(); j++) {
-                    const cp = c.getPost(j);
-                    if (cp.x === p0.x && cp.y === p0.y) {
-                        neighbors0.push(c);
-                    } else if (cp.x === p1.x && cp.y === p1.y) {
-                        neighbors1.push(c);
-                    }
+            for (const link of (nodeLinks.get(wireNode) ?? [])) {
+                const ce = link.elm;
+                if (ce === wire) continue;
+                const pt = ce.getPost(link.num);
+
+                // A wire neighbor is only usable if its current is already resolved
+                const notReady = ce.isWire() && !hasWireInfo.has(ce);
+
+                if (pt.x === wire.x && pt.y === wire.y) {
+                    neighbors0.push(ce);
+                    if (notReady) isReady0 = false;
+                } else if (pt.x === wire.x2 && pt.y === wire.y2) {
+                    neighbors1.push(ce);
+                    if (notReady) isReady1 = false;
                 }
             }
 
-            // Pick the post with known neighbors (prefer post 0 if both available)
-            if (neighbors0.length > 0) {
+            // Prefer a ready post that actually has neighbors; fall back to any ready post
+            const usePost0 = isReady0 && (neighbors0.length > 0 || !isReady1);
+            const usePost1 = !usePost0 && isReady1;
+
+            if (usePost0) {
                 wi.neighbors = neighbors0;
                 wi.post = 0;
-            } else {
+                hasWireInfo.add(wire);
+                moved = 0;
+                i++;
+            } else if (usePost1) {
                 wi.neighbors = neighbors1;
                 wi.post = 1;
+                hasWireInfo.add(wire);
+                moved = 0;
+                i++;
+            } else {
+                // Both posts have unresolved wire deps — move to end and retry (matches Java)
+                this.wireInfoList.push(this.wireInfoList.splice(i, 1)[0]);
+                moved++;
+                if (moved > this.wireInfoList.length * 2) {
+                    // Wire loop — use best available neighbors
+                    wi.neighbors = neighbors0.length > 0 ? neighbors0 : neighbors1;
+                    wi.post = neighbors0.length > 0 ? 0 : 1;
+                    hasWireInfo.add(wire);
+                    moved = 0;
+                    i++;
+                }
             }
         }
     }
@@ -565,7 +610,6 @@ export class SimulationManager {
                 cur += neighbor.getCurrentIntoNode(n);
             }
             wire.current = (wi.post === 0) ? cur : -cur;
-            wire.curcount = 0; // reset dot position
         }
     }
 
