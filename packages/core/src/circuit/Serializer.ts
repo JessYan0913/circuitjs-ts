@@ -174,6 +174,7 @@ const XML_TAG_CLASS: Record<string, ComponentConstructor> = {
     w: WireComponent,
     C: PolarCapacitorComponent,
     // Switches
+    s: SwitchComponent,
     S: SwitchComponent,
     SPST: SwitchComponent,
     SPDT: Switch2Component,
@@ -468,15 +469,22 @@ export class Serializer {
             if (attrs.mts) header.minTimeStep = parseFloat(attrs.mts);
         }
 
+        // Strip <o>...</o> scope blocks before matching components to avoid false
+        // matches on nested <p> plot tags which share the PushSwitch tag name.
+        const xmlForComponents = xml.replace(/<o\b[^>]*>[\s\S]*?<\/o>/g, '');
+
         // Find all self-closing tags like <name ... />
         const compRegex = /<(\w+)\s+([^>]*?)\/>/g;
         let match: RegExpExecArray | null;
-        while ((match = compRegex.exec(xml)) !== null) {
+        while ((match = compRegex.exec(xmlForComponents)) !== null) {
             const tagName = match[1];
             const attrs = Serializer.parseXmlAttrs(match[2]);
 
             const ctor = XML_TAG_CLASS[tagName];
             if (!ctor) continue;
+
+            // Require coordinate data — <p> plot tags inside <o> scope blocks have no 'x'
+            if (!attrs.x) continue;
 
             // Parse coordinates from 'x' attribute: "x1 y1 x2 y2"
             const coords = (attrs.x || '').split(/\s+/).map(Number);
@@ -500,6 +508,9 @@ export class Serializer {
                     break;
                 case 'l':
                     if (attrs.l) (comp as InductorComponent).inductance = parseFloat(attrs.l);
+                    break;
+                case 's':
+                    if (attrs.p) (comp as SwitchComponent).position = parseInt(attrs.p);
                     break;
                 case 'S':
                 case 'SPST':

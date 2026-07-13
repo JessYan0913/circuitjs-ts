@@ -6,11 +6,11 @@
     "main": "dist/main.js",
     "scripts": {
         "build": "tsc",
-        "dev": "npm -w packages/ui run build && tsc && electron .",
+        "dev": "pnpm --filter ./packages/ui run build && tsc && electron .",
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@circuitjs/mcp-server": "*"
+        "@circuitjs/mcp-server": "workspace:*"
     },
     "devDependencies": {
         "electron": "^43.0.0"

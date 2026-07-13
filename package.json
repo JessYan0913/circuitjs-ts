@@ -11,18 +11,18 @@
         "packages/electron"
     ],
     "scripts": {
-        "build:shared": "npm -w packages/shared run build",
-        "build:circuits": "npm -w packages/circuits run build",
-        "build:core": "npm -w packages/core run build",
-        "build:cli": "npm -w packages/cli run build",
-        "build:ui": "npm -w packages/ui run build",
-        "build:mcp": "npm -w packages/mcp-server run build",
-        "build": "npm run build:shared && npm run build:circuits && npm run build:core && npm run build:cli && npm run build:mcp && npm run build:ui",
-        "dev:core": "npm -w packages/core run dev",
-        "dev:ui": "npm -w packages/ui run dev",
+        "build:shared": "pnpm --filter ./packages/shared run build",
+        "build:circuits": "pnpm --filter ./packages/circuits run build",
+        "build:core": "pnpm --filter ./packages/core run build",
+        "build:cli": "pnpm --filter ./packages/cli run build",
+        "build:ui": "pnpm --filter ./packages/ui run build",
+        "build:mcp": "pnpm --filter ./packages/mcp-server run build",
+        "build": "pnpm run build:shared && pnpm run build:circuits && pnpm run build:core && pnpm run build:cli && pnpm run build:mcp && pnpm run build:ui",
+        "dev:core": "pnpm --filter ./packages/core run dev",
+        "dev:ui": "pnpm --filter ./packages/ui run dev",
         "test": "vitest run",
         "test:watch": "vitest",
-        "clean": "npm -w packages/shared run clean && npm -w packages/core run clean && npm -w packages/cli run clean && npm -w packages/mcp-server run clean && npm -w packages/ui run clean"
+        "clean": "pnpm --filter ./packages/shared run clean && pnpm --filter ./packages/core run clean && pnpm --filter ./packages/cli run clean && pnpm --filter ./packages/mcp-server run clean && pnpm --filter ./packages/ui run clean"
     },
     "devDependencies": {
         "typescript": "^5.7.0",

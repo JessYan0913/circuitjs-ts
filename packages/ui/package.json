@@ -10,9 +10,9 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@circuitjs/circuits": "*",
-        "@circuitjs/core": "*",
-        "@circuitjs/shared": "*",
+        "@circuitjs/circuits": "workspace:*",
+        "@circuitjs/core": "workspace:*",
+        "@circuitjs/shared": "workspace:*",
         "@radix-ui/react-context-menu": "^2.3.3",
         "@radix-ui/react-dialog": "^1.1.19",
         "@radix-ui/react-dropdown-menu": "^2.1.20",

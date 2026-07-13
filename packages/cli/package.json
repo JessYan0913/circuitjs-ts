@@ -13,8 +13,8 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@circuitjs/core": "*",
-        "@circuitjs/shared": "*",
+        "@circuitjs/core": "workspace:*",
+        "@circuitjs/shared": "workspace:*",
         "commander": "^13.0.0"
     }
 }
